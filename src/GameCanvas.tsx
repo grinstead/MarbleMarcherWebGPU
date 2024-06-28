@@ -3,6 +3,8 @@ import {
   CanvasContext,
   Matrix4x4,
   RenderShader,
+  UniformScalar,
+  UniformVector,
 } from "@grinstead/ambush";
 import { useContext } from "solid-js";
 
@@ -40,16 +42,21 @@ ${RENDER_QUAD}
 // at the origin, where both of those values have been multiplied
 // by the camera
 @group(0) @binding(0) var<uniform> camera: mat4x4f;
+@group(0) @binding(1) var<uniform> iFracScale: f32;
+@group(0) @binding(2) var<uniform> iFracAng1: f32;
+@group(0) @binding(3) var<uniform> iFracAng2: f32;
+@group(0) @binding(4) var<uniform> iFracShift: vec3f;
 
 fn inCamera(position: vec4f) -> vec3f {
   let transformed = camera * position;
   return transformed.xyz / transformed.w;
 }
 
-const CIRCLE_ORIGIN = vec3f(0, 0, 10);
+const CIRCLE_ORIGIN = vec3f(0, 0, 40);
 const CIRCLE_RADIUS = 1.0f;
-const MAX_STEPS = 100;
+const MAX_STEPS = 1000;
 const EPSILON = 1e-5;
+const FRACTAL_LEVELS = 16;
 
 struct RayMarchResult {
   // the distance to the scene
@@ -61,12 +68,46 @@ struct RayMarchResult {
   steps: f32,
 }
 
+fn rotX(p: vec3f, a: f32) -> vec3f {
+  let c = cos(a);
+  let s = sin(a);
+  return vec3f(p.x, c * p.y + s * p.z, c * p.z - s * p.y);
+}
+
+fn rotZ(p: vec3f, a: f32) -> vec3f {
+  let c = cos(a);
+  let s = sin(a);
+  return vec3f(c * p.x + s * p.y, c * p.y - s * p.x, p.z);
+}
+
 fn max3(a: f32, b: f32, c: f32) -> f32 {
   return max(max(a, b), c);
 }
 
 fn max4(a: f32, b: f32, c: f32, d: f32) -> f32 {
   return max(max(a, b), max(c, d));
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Geometry
+/////////////////////////////////////////////////////////////////////////////
+
+fn mengerFold(point: vec3f) -> vec3f {
+  var p = point;
+  
+  var a = min(p.x - p.y, 0.0);
+  p.x -= a;
+  p.y += a;
+
+  a = min(p.x - p.z, 0.0);
+  p.x -= a;
+  p.z += a;
+
+  a = min(p.y - p.z, 0.0);
+  p.y -= a;
+  p.z += a;
+
+  return p;
 }
 
 fn de_sphere(p: vec3f, r: f32) -> f32 {
@@ -92,9 +133,27 @@ fn de_capsule(p: vec3f, h: f32, r: f32) -> f32 {
 	return length(p - vec3f(0, clamp(p.y, -h, h), 0)) - r;
 }
 
-fn estimateHeadroom(point: vec3f) -> f32 {
-  return de_sphere(point - CIRCLE_ORIGIN, CIRCLE_RADIUS);
+fn de_fractal(point: vec3f) -> f32 {
+  var p = point;
+  for (var i = 0; i < FRACTAL_LEVELS; i++) {
+    p = abs(p);
+    p = rotZ(p, iFracAng1);
+    p = mengerFold(p);
+    p = rotX(p, iFracAng2);
+    p *= iFracScale;
+    p += iFracShift;
+  }
+
+  return de_box(p, vec3f(6.));
 }
+
+fn estimateHeadroom(point: vec3f) -> f32 {
+  return de_fractal(point - CIRCLE_ORIGIN);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Main Code
+/////////////////////////////////////////////////////////////////////////////
 
 // http://www.iquilezles.org/www/articles/normalsSDF/normalsSDF.htm
 fn calcNormal(point: vec3f) -> vec3f {
@@ -141,9 +200,8 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   let march = rayMarch(position, dir);
   if (march.headroom <= EPSILON) {
     let norm = calcNormal(march.scenePoint);
-    return vec4f(norm, 1.);
+    return vec4f(.5 * norm + vec3f(1, 1, 1), 1.);
   }
-
 
   return vec4f(.1, 0, 0, 1);
 }
@@ -161,12 +219,16 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
       draw={4}
     >
       <BindGroup>
-        <Matrix4x4>
+        <Matrix4x4 label="camera">
           {1} {0} {0} {0}
           {0} {canvas.height / canvas.width} {0} {0}
           {0} {0} {1} {0}
-          {0} {0} {0} {1}
+          {0} {0} {-100} {1}
         </Matrix4x4>
+        <UniformScalar label="iFracScale" type="f32" value={1} />
+        <UniformScalar label="iFracAng1" type="f32" value={-0.12} />
+        <UniformScalar label="iFracAng2" type="f32" value={0.5} />
+        <UniformVector label="iFracShift" value={[-2.12, -2.75, 0.49]} />
       </BindGroup>
     </RenderShader>
   );
