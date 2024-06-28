@@ -68,16 +68,16 @@ struct RayMarchResult {
   steps: f32,
 }
 
-fn rotX(p: vec3f, a: f32) -> vec3f {
+fn rotX(p: vec4f, a: f32) -> vec4f {
   let c = cos(a);
   let s = sin(a);
-  return vec3f(p.x, c * p.y + s * p.z, c * p.z - s * p.y);
+  return vec4f(p.x, c * p.y + s * p.z, c * p.z - s * p.y, p.w);
 }
 
-fn rotZ(p: vec3f, a: f32) -> vec3f {
+fn rotZ(p: vec4f, a: f32) -> vec4f {
   let c = cos(a);
   let s = sin(a);
-  return vec3f(c * p.x + s * p.y, c * p.y - s * p.x, p.z);
+  return vec4f(c * p.x + s * p.y, c * p.y - s * p.x, p.zw);
 }
 
 fn max3(a: f32, b: f32, c: f32) -> f32 {
@@ -92,7 +92,7 @@ fn max4(a: f32, b: f32, c: f32, d: f32) -> f32 {
 // Geometry
 /////////////////////////////////////////////////////////////////////////////
 
-fn mengerFold(point: vec3f) -> vec3f {
+fn mengerFold(point: vec4f) -> vec4f {
   var p = point;
   
   var a = min(p.x - p.y, 0.0);
@@ -114,9 +114,9 @@ fn de_sphere(p: vec3f, r: f32) -> f32 {
 	return length(p) - r;
 }
 
-fn de_box(p: vec3f, sides: vec3f) -> f32 {
+fn de_box(p: vec4f, sides: vec3f) -> f32 {
 	let a = abs(p.xyz) - sides;
-	return min(max3(a.x, a.y, a.z), 0.0) + length(max(a, vec3f()));
+	return (min(max3(a.x, a.y, a.z), 0.0) + length(max(a, vec3f()))) / p.w;
 }
 
 fn de_tetrahedron(p: vec3f, r: f32) -> f32 {
@@ -133,22 +133,22 @@ fn de_capsule(p: vec3f, h: f32, r: f32) -> f32 {
 	return length(p - vec3f(0, clamp(p.y, -h, h), 0)) - r;
 }
 
-fn de_fractal(point: vec3f) -> f32 {
+fn de_fractal(point: vec4f) -> f32 {
   var p = point;
   for (var i = 0; i < FRACTAL_LEVELS; i++) {
-    p = abs(p);
+    p = vec4f(abs(p.xyz), p.w);
     p = rotZ(p, iFracAng1);
     p = mengerFold(p);
     p = rotX(p, iFracAng2);
     p *= iFracScale;
-    p += iFracShift;
+    p += vec4f(iFracShift, 0.);
   }
 
   return de_box(p, vec3f(6.));
 }
 
 fn estimateHeadroom(point: vec3f) -> f32 {
-  return de_fractal(point - CIRCLE_ORIGIN);
+  return de_fractal(vec4f(point - CIRCLE_ORIGIN, 1));
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -223,9 +223,9 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
           {1} {0} {0} {0}
           {0} {canvas.height / canvas.width} {0} {0}
           {0} {0} {1} {0}
-          {0} {0} {-100} {1}
+          {0} {0} {0} {1}
         </Matrix4x4>
-        <UniformScalar label="iFracScale" type="f32" value={1} />
+        <UniformScalar label="iFracScale" type="f32" value={1.2} />
         <UniformScalar label="iFracAng1" type="f32" value={-0.12} />
         <UniformScalar label="iFracAng2" type="f32" value={0.5} />
         <UniformVector label="iFracShift" value={[-2.12, -2.75, 0.49]} />
