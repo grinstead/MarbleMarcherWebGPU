@@ -6,7 +6,7 @@ function App() {
   return (
     <>
       <h1 id="logo">Marble Marcher (WebGPU)</h1>
-      <Canvas id="canvas">
+      <Canvas id="canvas" width={640} height={480}>
         <GameCanvas />
       </Canvas>
     </>
