@@ -61,12 +61,39 @@ struct RayMarchResult {
   steps: f32,
 }
 
-fn ed_circle(point: vec3f) -> f32 {
-  return length(point - CIRCLE_ORIGIN) - CIRCLE_RADIUS;
+fn max3(a: f32, b: f32, c: f32) -> f32 {
+  return max(max(a, b), c);
+}
+
+fn max4(a: f32, b: f32, c: f32, d: f32) -> f32 {
+  return max(max(a, b), max(c, d));
+}
+
+fn de_sphere(p: vec3f, r: f32) -> f32 {
+	return length(p) - r;
+}
+
+fn de_box(p: vec3f, sides: vec3f) -> f32 {
+	let a = abs(p.xyz) - sides;
+	return min(max3(a.x, a.y, a.z), 0.0) + length(max(a, vec3f()));
+}
+
+fn de_tetrahedron(p: vec3f, r: f32) -> f32 {
+	let md = max4(
+    -p.x - p.y - p.z,
+     p.x + p.y - p.z,
+		-p.x + p.y + p.z,
+     p.x - p.y + p.z
+  );
+	return (md - r) / sqrt(3.0);
+}
+
+fn de_capsule(p: vec3f, h: f32, r: f32) -> f32 {
+	return length(p - vec3f(0, clamp(p.y, -h, h), 0)) - r;
 }
 
 fn estimateHeadroom(point: vec3f) -> f32 {
-  return ed_circle(point);
+  return de_sphere(point - CIRCLE_ORIGIN, CIRCLE_RADIUS);
 }
 
 // http://www.iquilezles.org/www/articles/normalsSDF/normalsSDF.htm
