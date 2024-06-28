@@ -42,10 +42,12 @@ ${RENDER_QUAD}
 // at the origin, where both of those values have been multiplied
 // by the camera
 @group(0) @binding(0) var<uniform> camera: mat4x4f;
-@group(0) @binding(1) var<uniform> iFracScale: f32;
-@group(0) @binding(2) var<uniform> iFracAng1: f32;
-@group(0) @binding(3) var<uniform> iFracAng2: f32;
-@group(0) @binding(4) var<uniform> iFracShift: vec3f;
+
+@group(1) @binding(0) var<uniform> iFracScale: f32;
+@group(1) @binding(1) var<uniform> iFracAng1: f32;
+@group(1) @binding(2) var<uniform> iFracAng2: f32;
+@group(1) @binding(3) var<uniform> iFracShift: vec3f;
+@group(1) @binding(4) var<uniform> iFracCol: vec3f;
 
 fn inCamera(position: vec4f) -> vec3f {
   let transformed = camera * position;
@@ -57,14 +59,13 @@ const CIRCLE_RADIUS = 1.0f;
 const MAX_STEPS = 1000;
 const EPSILON = 1e-5;
 const FRACTAL_LEVELS = 16;
+const MAX_DISTANCE = 30;
 
 struct RayMarchResult {
-  // the distance to the scene
-  scenePoint: vec3f,
+  // The position we ended the ray march in
+  endPoint: vec4f,
   // the amount of remaining distance
   headroom: f32,
-  // The position we ended the ray march in
-  endPoint: vec3f,
   steps: f32,
 }
 
@@ -147,8 +148,24 @@ fn de_fractal(point: vec4f) -> f32 {
   return de_box(p, vec3f(6.));
 }
 
-fn estimateHeadroom(point: vec3f) -> f32 {
-  return de_fractal(vec4f(point - CIRCLE_ORIGIN, 1));
+fn col_fractal(point: vec4f) -> vec4f {
+  var orbit = vec3f();
+  var p = point;
+  for (var i = 0; i < FRACTAL_LEVELS; i++) {
+    p = vec4f(abs(p.xyz), p.w);
+    p = rotZ(p, iFracAng1);
+    p = mengerFold(p);
+    p = rotX(p, iFracAng2);
+    p *= iFracScale;
+    p += vec4f(iFracShift, 0.);
+    orbit = max(orbit, p.xyz * iFracCol);
+  }
+
+  return vec4f(orbit, 1);
+}
+
+fn estimateHeadroom(point: vec4f) -> f32 {
+  return de_fractal(point);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -156,31 +173,30 @@ fn estimateHeadroom(point: vec3f) -> f32 {
 /////////////////////////////////////////////////////////////////////////////
 
 // http://www.iquilezles.org/www/articles/normalsSDF/normalsSDF.htm
-fn calcNormal(point: vec3f) -> vec3f {
+fn calcNormal(point: vec4f) -> vec3f {
   let offset = .5 * EPSILON;
-  let k = vec2f(1, -1);
+  let k = vec3f(1, -1, 0);
 	return normalize(
-    k.xyy * estimateHeadroom(point + k.xyy * offset) +
-		k.yyx * estimateHeadroom(point + k.yyx * offset) +
-		k.yxy * estimateHeadroom(point + k.yxy * offset) +
-		k.xxx * estimateHeadroom(point + k.xxx * offset)
+    k.xyy * estimateHeadroom(point + k.xyyz * offset) +
+		k.yyx * estimateHeadroom(point + k.yyxz * offset) +
+		k.yxy * estimateHeadroom(point + k.yxyz * offset) +
+		k.xxx * estimateHeadroom(point + k.xxxz * offset)
   );
 }
 
-fn rayMarch(start: vec3f, direction: vec3f) -> RayMarchResult {
+fn rayMarch(start: vec4f, direction: vec3f) -> RayMarchResult {
   var steps = 0;
   var position = start;
   var distance = 0.;
   loop {
     let headroom = estimateHeadroom(position);
     distance += headroom;
-    position += headroom * direction;
+    position += vec4f(headroom * direction, 0);
 
-    if (headroom < EPSILON || steps >= MAX_STEPS) {
+    if (headroom < EPSILON || distance > MAX_DISTANCE || steps >= MAX_STEPS) {
       return RayMarchResult(
-        CIRCLE_ORIGIN + CIRCLE_RADIUS * normalize(position - CIRCLE_ORIGIN),
-        headroom,
         position,
+        headroom,
         f32(steps)
       );
     }
@@ -197,10 +213,9 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   var position = inCamera(vec4f(fragUV - 0.5, -1, 1));
   var dir = normalize(inCamera(vec4f(0, 0, 0, 1)) - position);
 
-  let march = rayMarch(position, dir);
+  let march = rayMarch(vec4f(position, 1), dir);
   if (march.headroom <= EPSILON) {
-    let norm = calcNormal(march.scenePoint);
-    return vec4f(.5 * norm + vec3f(1, 1, 1), 1.);
+    return col_fractal(march.endPoint);
   }
 
   return vec4f(.1, 0, 0, 1);
@@ -223,12 +238,15 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
           {1} {0} {0} {0}
           {0} {canvas.height / canvas.width} {0} {0}
           {0} {0} {1} {0}
-          {0} {0} {0} {1}
+          {0} {0} {-10} {1}
         </Matrix4x4>
-        <UniformScalar label="iFracScale" type="f32" value={1.2} />
+      </BindGroup>
+      <BindGroup>
+        <UniformScalar label="iFracScale" type="f32" value={1.8} />
         <UniformScalar label="iFracAng1" type="f32" value={-0.12} />
         <UniformScalar label="iFracAng2" type="f32" value={0.5} />
         <UniformVector label="iFracShift" value={[-2.12, -2.75, 0.49]} />
+        <UniformVector label="iFracCol" value={[0.42, 0.38, 0.19]} />
       </BindGroup>
     </RenderShader>
   );
