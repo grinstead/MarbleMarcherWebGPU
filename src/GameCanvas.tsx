@@ -54,12 +54,17 @@ fn inCamera(position: vec4f) -> vec3f {
   return transformed.xyz / transformed.w;
 }
 
+const BACKGROUND_COLOR = vec4f(0.6, 0.8, 1.0, 1.0);
 const CIRCLE_ORIGIN = vec3f(0, 0, 40);
 const CIRCLE_RADIUS = 1.0f;
-const MAX_STEPS = 1000;
 const EPSILON = 1e-5;
 const FRACTAL_LEVELS = 16;
+const LIGHT_DIRECTION = vec3f(-0.36, 0.8, 0.48);
+const LIGHT_COLOR = vec3f(1.0, 0.95, 0.8);
 const MAX_DISTANCE = 30;
+const MAX_STEPS = 1000;
+const SUN_SHARPNESS = 2.0;
+const SUN_SIZE = 0.004;
 
 struct RayMarchResult {
   // The position we ended the ray march in
@@ -218,7 +223,15 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
     return col_fractal(march.endPoint);
   }
 
-  return vec4f(.1, 0, 0, 1);
+  // The ray did not hit the target
+  var color = BACKGROUND_COLOR;
+
+  // "spec" for specular
+  var sunSpec = dot(dir, LIGHT_DIRECTION) - 1.0 + SUN_SIZE;
+  sunSpec = min(exp(sunSpec * SUN_SHARPNESS / SUN_SIZE), 1.);
+  color += vec4f(LIGHT_COLOR * sunSpec, 0);
+
+  return color;
 }
     
     `;
