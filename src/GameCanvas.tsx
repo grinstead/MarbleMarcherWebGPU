@@ -63,6 +63,8 @@ const LIGHT_DIRECTION = vec3f(-0.36, 0.8, 0.48);
 const LIGHT_COLOR = vec3f(1.0, 0.95, 0.8);
 const MAX_DISTANCE = 30;
 const MAX_STEPS = 1000;
+const SHADOW_DARKNESS = 0.7;
+const SHADOW_SHARPNESS = 10.0;
 const SUN_SHARPNESS = 2.0;
 const SUN_SIZE = 0.004;
 
@@ -71,6 +73,8 @@ struct RayMarchResult {
   endPoint: vec4f,
   // the amount of remaining distance
   headroom: f32,
+  minHeadroom: f32,
+  distance: f32,
   steps: f32,
 }
 
@@ -189,25 +193,29 @@ fn calcNormal(point: vec4f) -> vec3f {
   );
 }
 
-fn rayMarch(start: vec4f, direction: vec3f) -> RayMarchResult {
+fn rayMarch(start: vec4f, direction: vec3f, sharpness: f32) -> RayMarchResult {
   var steps = 0;
   var position = start;
   var distance = 0.;
+  var minHeadroom = EPSILON;
   loop {
     let headroom = estimateHeadroom(position);
-    distance += headroom;
-    position += vec4f(headroom * direction, 0);
 
-    if (headroom < EPSILON || distance > MAX_DISTANCE || steps >= MAX_STEPS) {
+    if (headroom < minHeadroom || distance > MAX_DISTANCE || steps >= MAX_STEPS) {
       return RayMarchResult(
         position,
         headroom,
+        minHeadroom,
+        distance,
         f32(steps)
       );
     }
 
     continuing {
       steps++;
+      distance += headroom;
+      position += vec4f(headroom * direction, 0);
+      minHeadroom = min(minHeadroom, sharpness * headroom / distance);
     }
   }
 }
@@ -218,19 +226,30 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   var position = inCamera(vec4f(fragUV - 0.5, -1, 1));
   var dir = normalize(inCamera(vec4f(0, 0, 0, 1)) - position);
 
-  let march = rayMarch(vec4f(position, 1), dir);
-  if (march.headroom <= EPSILON) {
-    return col_fractal(march.endPoint);
+  let march = rayMarch(vec4f(position, 1), dir, 1.0);
+  if (march.headroom > EPSILON) {
+      // The ray did not hit the target
+      var color = BACKGROUND_COLOR;
+    
+      // "spec" for specular
+      var sunSpec = dot(dir, LIGHT_DIRECTION) - 1.0 + SUN_SIZE;
+      sunSpec = min(exp(sunSpec * SUN_SHARPNESS / SUN_SIZE), 1.);
+      color += vec4f(LIGHT_COLOR * sunSpec, 0);
+    
+      return color;
   }
 
-  // The ray did not hit the target
-  var color = BACKGROUND_COLOR;
+  var color = col_fractal(march.endPoint);
 
-  // "spec" for specular
-  var sunSpec = dot(dir, LIGHT_DIRECTION) - 1.0 + SUN_SIZE;
-  sunSpec = min(exp(sunSpec * SUN_SHARPNESS / SUN_SIZE), 1.);
-  color += vec4f(LIGHT_COLOR * sunSpec, 0);
+  let normal = calcNormal(march.endPoint);
+  let lightPoint = vec4f(march.endPoint.xyz + normal * EPSILON * 100., 1.);
+  let lightMarch = rayMarch(lightPoint, LIGHT_DIRECTION, SHADOW_SHARPNESS);
+  var k = lightMarch.minHeadroom * min(lightMarch.distance, 1.0);
 
+  k = max(k, 1.0 - SHADOW_DARKNESS);
+
+  color = vec4f(color.xyz * LIGHT_COLOR * k, 1);
+  
   return color;
 }
     
