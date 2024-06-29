@@ -5,8 +5,16 @@ import {
   RenderShader,
   UniformScalar,
   UniformVector,
+  VEC_ZERO,
+  Vec,
+  addVec,
+  createMouseTracker,
+  scale,
+  scaleCoords,
+  subtractVec,
+  vec,
 } from "@grinstead/ambush";
-import { useContext } from "solid-js";
+import { createEffect, createMemo, createSignal, useContext } from "solid-js";
 
 const RENDER_QUAD = `
 struct VertexOutput {
@@ -257,6 +265,22 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
 
   const { canvas } = useContext(CanvasContext);
 
+  const [mouse, trackMouseInElement] = createMouseTracker();
+  const [pos, setPos] = createSignal(vec(0, 0, -10));
+
+  trackMouseInElement(canvas);
+
+  createEffect<Vec>((prevPos) => {
+    const pos = scaleCoords(mouse.pos(), 1 / canvas.width, -1 / canvas.height);
+    const diff = prevPos ? subtractVec(pos, prevPos) : VEC_ZERO;
+
+    if (mouse.buttons()) {
+      setPos((prev) => addVec(prev, scale(diff, Math.abs(prev.z) / 2)));
+    }
+
+    return pos;
+  });
+
   return (
     <RenderShader
       label="Test Shader"
@@ -270,7 +294,7 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
           {1} {0} {0} {0}
           {0} {canvas.height / canvas.width} {0} {0}
           {0} {0} {1} {0}
-          {0} {0} {-10} {1}
+          {pos().x} {pos().y} {pos().z} {1}
         </Matrix4x4>
       </BindGroup>
       <BindGroup>
