@@ -50,6 +50,7 @@ ${RENDER_QUAD}
 // at the origin, where both of those values have been multiplied
 // by the camera
 @group(0) @binding(0) var<uniform> camera: mat4x4f;
+@group(0) @binding(1) var<uniform> iResolution: vec2f;
 
 @group(1) @binding(0) var<uniform> iFracScale: f32;
 @group(1) @binding(1) var<uniform> iFracAng1: f32;
@@ -66,6 +67,7 @@ const BACKGROUND_COLOR = vec4f(0.6, 0.8, 1.0, 1.0);
 const CIRCLE_ORIGIN = vec3f(0, 0, 40);
 const CIRCLE_RADIUS = 1.0f;
 const EPSILON = 1e-5;
+const FOCAL_DIST = 1.73205080757;
 const FRACTAL_LEVELS = 16;
 const LIGHT_DIRECTION = vec3f(-0.36, 0.8, 0.48);
 const LIGHT_COLOR = vec3f(1.0, 0.95, 0.8);
@@ -231,10 +233,13 @@ fn rayMarch(start: vec4f, direction: vec3f, sharpness: f32) -> RayMarchResult {
 
 @fragment
 fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
-  var position = inCamera(vec4f(fragUV - 0.5, -1, 1));
-  var dir = normalize(inCamera(vec4f(0, 0, 0, 1)) - position);
+  var uv = 2. * fragUV - 1.;
+  uv.x *= iResolution.x / iResolution.y;
 
-  let march = rayMarch(vec4f(position, 1), dir, 1.0);
+  var position = camera[3];
+  var dir = (camera * normalize(vec4f(uv.x, uv.y, -FOCAL_DIST, 0.0))).xyz;
+
+  let march = rayMarch(position, dir, 1.0);
   if (march.headroom > EPSILON) {
       // The ray did not hit the target
       var color = BACKGROUND_COLOR;
@@ -249,14 +254,14 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
 
   var color = col_fractal(march.endPoint);
 
-  let normal = calcNormal(march.endPoint);
-  let lightPoint = vec4f(march.endPoint.xyz + normal * EPSILON * 100., 1.);
-  let lightMarch = rayMarch(lightPoint, LIGHT_DIRECTION, SHADOW_SHARPNESS);
-  var k = lightMarch.minHeadroom * min(lightMarch.distance, 1.0);
+  // let normal = calcNormal(march.endPoint);
+  // let lightPoint = vec4f(march.endPoint.xyz + normal * EPSILON * 100., 1.);
+  // let lightMarch = rayMarch(lightPoint, LIGHT_DIRECTION, SHADOW_SHARPNESS);
+  // var k = lightMarch.minHeadroom * min(lightMarch.distance, 1.0);
 
-  k = max(k, 1.0 - SHADOW_DARKNESS);
+  // k = max(k, 1.0 - SHADOW_DARKNESS);
 
-  color = vec4f(color.xyz * LIGHT_COLOR * k, 1);
+  // color = vec4f(color.xyz * LIGHT_COLOR * k, 1);
   
   return color;
 }
@@ -266,16 +271,16 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   const { canvas } = useContext(CanvasContext);
 
   const [mouse, trackMouseInElement] = createMouseTracker();
-  const [pos, setPos] = createSignal(vec(0, 0, -10));
+  const [pos, setPos] = createSignal(vec(0, 0, 10));
 
   trackMouseInElement(canvas);
 
   createEffect<Vec>((prevPos) => {
-    const pos = scaleCoords(mouse.pos(), 1 / canvas.width, -1 / canvas.height);
+    const pos = mouse.pos();
     const diff = prevPos ? subtractVec(pos, prevPos) : VEC_ZERO;
 
     if (mouse.buttons()) {
-      setPos((prev) => addVec(prev, scale(diff, Math.abs(prev.z) / 2)));
+      setPos((prev) => addVec(prev, scale(diff, Math.abs(prev.z) / 100)));
     }
 
     return pos;
@@ -292,10 +297,14 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
       <BindGroup>
         <Matrix4x4 label="camera">
           {1} {0} {0} {0}
-          {0} {canvas.height / canvas.width} {0} {0}
+          {0} {1} {0} {0}
           {0} {0} {1} {0}
           {pos().x} {pos().y} {pos().z} {1}
         </Matrix4x4>
+        <UniformVector
+          label="iResolution"
+          value={[canvas.width, canvas.height]}
+        />
       </BindGroup>
       <BindGroup>
         <UniformScalar label="iFracScale" type="f32" value={1.8} />
