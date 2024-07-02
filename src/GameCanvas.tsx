@@ -200,8 +200,7 @@ fn estimateHeadroom(point: vec4f) -> f32 {
 /////////////////////////////////////////////////////////////////////////////
 
 // http://www.iquilezles.org/www/articles/normalsSDF/normalsSDF.htm
-fn calcNormal(point: vec4f) -> vec3f {
-  let offset = .5 * EPSILON;
+fn calcNormal(point: vec4f, offset: f32) -> vec3f {
   let k = vec3f(1, -1, 0);
 	return normalize(
     k.xyy * estimateHeadroom(point + k.xyyz * offset) +
@@ -212,18 +211,22 @@ fn calcNormal(point: vec4f) -> vec3f {
 }
 
 fn rayMarch(start: vec4f, direction: vec3f, sharpness: f32) -> RayMarchResult {
+  let FOVperPixel = 1.0 / max(iResolution.x, 900.0);
+
   var steps = 0;
   var position = start;
   var distance = 0.;
   var minHeadroom = EPSILON;
   loop {
+    let adjustedMin = max(FOVperPixel * distance, minHeadroom);
+
     let headroom = estimateHeadroom(position);
 
-    if (headroom < minHeadroom || distance > MAX_DISTANCE || steps >= MAX_STEPS) {
+    if (headroom < adjustedMin || distance > MAX_DISTANCE || steps >= MAX_STEPS) {
       return RayMarchResult(
         position,
         headroom,
-        minHeadroom,
+        adjustedMin,
         distance,
         f32(steps)
       );
@@ -241,6 +244,8 @@ fn rayMarch(start: vec4f, direction: vec3f, sharpness: f32) -> RayMarchResult {
 
 @fragment
 fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
+  let FOVperPixel = 1.0 / max(iResolution.x, 900.0);
+
   var uv = 2. * fragUV - 1.;
   uv.x *= iResolution.x / iResolution.y;
 
@@ -248,7 +253,8 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   var dir = (camera * normalize(vec4f(uv.x, uv.y, -FOCAL_DIST, 0.0))).xyz;
 
   let march = rayMarch(position, dir, 1.0);
-  if (march.headroom > EPSILON) {
+  let minDist = max(FOVperPixel * march.distance, EPSILON);
+  if (march.headroom > minDist) {
       // The ray did not hit the target
       var color = BACKGROUND_COLOR;
     
@@ -259,8 +265,12 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
     
       return color;
   }
-
-  var color = col_fractal(march.endPoint);
+  
+  let norm = calcNormal(march.endPoint, minDist * 0.5);
+  
+  // find closest surface point, without this we get weird coloring artifacts
+  let endPoint = march.endPoint - vec4f(norm * march.headroom, 0);
+  var color = col_fractal(endPoint);
 
   // let normal = calcNormal(march.endPoint);
   // let lightPoint = vec4f(march.endPoint.xyz + normal * EPSILON * 100., 1.);
