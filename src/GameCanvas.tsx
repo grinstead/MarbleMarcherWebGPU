@@ -328,7 +328,7 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   rotateAboutX(camera, -0.3);
   rotateAboutY(camera, -2.365);
   translate(camera, -3.40191, 4.14347, -3.48312);
-  // translate(camera, 0, -1, -1);
+  translate(camera, 0, 1, 0);
 
   createEffect<Vec>((prevPos) => {
     const pos = mouse.pos();
