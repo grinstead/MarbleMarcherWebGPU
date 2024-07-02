@@ -320,7 +320,6 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   const { canvas } = useContext(CanvasContext);
 
   const [mouse, trackMouseInElement] = createMouseTracker();
-  const [pos, setPos] = createSignal(vec(-2.95862, 2.68825, -1.11868));
 
   trackMouseInElement(canvas);
 
@@ -330,12 +329,19 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   translate(camera, -3.40191, 4.14347, -3.48312);
   translate(camera, 0, 1, 0);
 
+  const [cameraMatrix, setCameraMatrix] = createSignal(camera.snapshot());
+
   createEffect<Vec>((prevPos) => {
     const pos = mouse.pos();
-    const diff = prevPos ? subtractVec(pos, prevPos) : VEC_ZERO;
 
     if (mouse.buttons()) {
-      setPos((prev) => addVec(prev, scale(diff, Math.abs(prev.z) / 100)));
+      let diff = prevPos ? subtractVec(pos, prevPos) : VEC_ZERO;
+
+      diff = scale(diff, 1 / canvas.width);
+      translate(camera, diff.x, diff.y, 0);
+
+      setCameraMatrix(camera.snapshot());
+      console.log("SHIFTING", diff);
     }
 
     return pos;
@@ -350,7 +356,7 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
       draw={4}
     >
       <BindGroup>
-        <UniformBuffer label="camera" bytes={camera.snapshot()} />
+        <UniformBuffer label="camera" bytes={cameraMatrix()} />
         <UniformVector
           label="iResolution"
           value={[canvas.width, canvas.height]}
