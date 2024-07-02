@@ -81,7 +81,7 @@ const FOCAL_DIST = 1.73205080757;
 const FRACTAL_LEVELS = 16;
 const LIGHT_DIRECTION = vec3f(-0.36, 0.8, 0.48);
 const LIGHT_COLOR = vec3f(1.0, 0.95, 0.8);
-const MAX_DISTANCE = 30;
+const MAX_DISTANCE = 30.0;
 const MAX_STEPS = 1000;
 const SHADOW_DARKNESS = 0.7;
 const SHADOW_SHARPNESS = 10.0;
@@ -221,9 +221,9 @@ fn rayMarch(start: vec4f, direction: vec3f, sharpness: f32) -> RayMarchResult {
   var steps = 0;
   var position = start;
   var distance = 0.;
-  var minHeadroom = EPSILON;
+  var minHeadroom = 1.;
   loop {
-    let adjustedMin = max(FOVperPixel * distance, minHeadroom);
+    let adjustedMin = max(FOVperPixel * distance, EPSILON);
 
     let headroom = estimateHeadroom(position);
 
@@ -231,9 +231,13 @@ fn rayMarch(start: vec4f, direction: vec3f, sharpness: f32) -> RayMarchResult {
       return RayMarchResult(
         position,
         headroom,
-        adjustedMin,
+        minHeadroom,
         distance,
-        f32(steps)
+        f32(steps) + select(
+          0., 
+          headroom / adjustedMin,
+          headroom < adjustedMin
+        )
       );
     }
 
@@ -259,7 +263,7 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
 
   let march = rayMarch(position, dir, 1.0);
   let minDist = max(FOVperPixel * march.distance, EPSILON);
-  if (march.headroom > minDist) {
+  if (march.headroom >= minDist) {
       // The ray did not hit the target
       var color = BACKGROUND_COLOR;
 
@@ -279,7 +283,9 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   // find closest surface point, without this we get weird coloring artifacts
   let endPoint = march.endPoint.xyz - norm * march.headroom;
   var color = vec3f(0);
-  let fracColor = col_fractal(vec4f(endPoint, 1)).xyz;
+  let fracColor = saturate(
+    col_fractal(vec4f(endPoint, 1)).xyz
+  );
 
   var k = 1.;
 
@@ -296,9 +302,11 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   // specular = pow(specular, SPECULAR_HIGHLIGHT);
   // color += specular * LIGHT_COLOR * (k * SPECULAR_MULT);
 
+  k = min(k, SHADOW_DARKNESS * 0.5 * (dot(norm, LIGHT_DIRECTION) - 1.) + 1.);
+
   k = max(k, 1.0 - SHADOW_DARKNESS);
 
-  color += fracColor;// * LIGHT_COLOR * k;
+  color += fracColor * LIGHT_COLOR * k;
 
   // let a = 1.0 / (1.0 + march.steps * AMBIENT_OCCLUSION_STRENGTH);
   // color += (1.0 - a) * AMBIENT_OCCLUSION_COLOR_DELTA;
