@@ -71,6 +71,8 @@ fn inCamera(position: vec4f) -> vec3f {
   return transformed.xyz / transformed.w;
 }
 
+const AMBIENT_OCCLUSION_COLOR_DELTA = vec3f(0.7);
+const AMBIENT_OCCLUSION_STRENGTH = 0.008;
 const BACKGROUND_COLOR = vec4f(0.6, 0.8, 1.0, 1.0);
 const CIRCLE_ORIGIN = vec3f(0, 0, 40);
 const CIRCLE_RADIUS = 1.0f;
@@ -83,6 +85,8 @@ const MAX_DISTANCE = 30;
 const MAX_STEPS = 1000;
 const SHADOW_DARKNESS = 0.7;
 const SHADOW_SHARPNESS = 10.0;
+const SPECULAR_HIGHLIGHT = 40;
+const SPECULAR_MULT = 0.25;
 const SUN_SHARPNESS = 2.0;
 const SUN_SIZE = 0.004;
 
@@ -267,21 +271,35 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   }
   
   let norm = calcNormal(march.endPoint, minDist * 0.5);
-  
+
   // find closest surface point, without this we get weird coloring artifacts
-  let endPoint = march.endPoint - vec4f(norm * march.headroom, 0);
-  var color = col_fractal(endPoint);
+  let endPoint = march.endPoint.xyz - norm * march.headroom;
+  var color = vec3f(0);
+  let fracColor = col_fractal(vec4f(endPoint, 1)).xyz;
 
-  // let normal = calcNormal(march.endPoint);
-  // let lightPoint = vec4f(march.endPoint.xyz + normal * EPSILON * 100., 1.);
-  // let lightMarch = rayMarch(lightPoint, LIGHT_DIRECTION, SHADOW_SHARPNESS);
-  // var k = lightMarch.minHeadroom * min(lightMarch.distance, 1.0);
+  var k = 1.;
 
-  // k = max(k, 1.0 - SHADOW_DARKNESS);
+  // shadows
+  let lightMarch = rayMarch(
+    vec4f(endPoint + norm * EPSILON * 100., 1.), 
+    LIGHT_DIRECTION, 
+    0
+  );
+  k = lightMarch.minHeadroom * min(lightMarch.distance, 1.0);
 
-  // color = vec4f(color.xyz * LIGHT_COLOR * k, 1);
+  let reflected = dir - 2. * dot(dir, norm) * norm;
+  var specular = max(dot(reflected, LIGHT_DIRECTION), 0.0);
+  specular = pow(specular, SPECULAR_HIGHLIGHT);
+  color += specular * LIGHT_COLOR * (k * SPECULAR_MULT);
+
+  k = max(k, 1.0 - SHADOW_DARKNESS);
+
+  color += fracColor * LIGHT_COLOR * k;
+
+  let a = 1.0 / (1.0 + march.steps * AMBIENT_OCCLUSION_STRENGTH);
+  color += (1.0 - a) * AMBIENT_OCCLUSION_COLOR_DELTA;
   
-  return color;
+  return vec4f(saturate(color), 1.);
 }
     
     `;
