@@ -3,6 +3,7 @@ import {
   CanvasContext,
   Matrix4x4,
   RenderShader,
+  UniformBuffer,
   UniformScalar,
   UniformVector,
   VEC_ZERO,
@@ -15,6 +16,13 @@ import {
   vec,
 } from "@grinstead/ambush";
 import { createEffect, createMemo, createSignal, useContext } from "solid-js";
+import {
+  MatrixBinary,
+  rotateAboutX,
+  rotateAboutY,
+  rotateAboutZ,
+  translate,
+} from "./Matrix.ts";
 
 const RENDER_QUAD = `
 struct VertexOutput {
@@ -271,9 +279,15 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   const { canvas } = useContext(CanvasContext);
 
   const [mouse, trackMouseInElement] = createMouseTracker();
-  const [pos, setPos] = createSignal(vec(0, 0, 10));
+  const [pos, setPos] = createSignal(vec(-2.95862, 2.68825, -1.11868));
 
   trackMouseInElement(canvas);
+
+  const camera = new MatrixBinary();
+  rotateAboutX(camera, -0.3);
+  rotateAboutY(camera, -2);
+  translate(camera, -2.95862, 2.68825, -1.11868);
+  translate(camera, 0, 1, -2);
 
   createEffect<Vec>((prevPos) => {
     const pos = mouse.pos();
@@ -295,12 +309,7 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
       draw={4}
     >
       <BindGroup>
-        <Matrix4x4 label="camera">
-          {1} {0} {0} {0}
-          {0} {1} {0} {0}
-          {0} {0} {1} {0}
-          {pos().x} {pos().y} {pos().z} {1}
-        </Matrix4x4>
+        <UniformBuffer label="camera" bytes={camera.snapshot()} />
         <UniformVector
           label="iResolution"
           value={[canvas.width, canvas.height]}
