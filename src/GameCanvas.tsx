@@ -290,18 +290,19 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   var k = 1.;
 
   // shadows
-  // let lightMarch = rayMarch(
-  //   vec4f(endPoint + norm * EPSILON * 100., 1.), 
-  //   LIGHT_DIRECTION, 
-  //   0
-  // );
-  // k = lightMarch.minHeadroom * min(lightMarch.distance, 1.0);
+  let lightMarch = rayMarch(
+    vec4f(endPoint + norm * EPSILON * 100., 1.), 
+    LIGHT_DIRECTION, 
+    SHADOW_SHARPNESS
+  );
+  k = lightMarch.minHeadroom * min(lightMarch.distance, 1.0);
 
-  // let reflected = dir - 2. * dot(dir, norm) * norm;
-  // var specular = max(dot(reflected, LIGHT_DIRECTION), 0.0);
-  // specular = pow(specular, SPECULAR_HIGHLIGHT);
-  // color += specular * LIGHT_COLOR * (k * SPECULAR_MULT);
+  let reflected = dir - 2. * dot(dir, norm) * norm;
+  var specular = max(dot(reflected, LIGHT_DIRECTION), 0.0);
+  specular = pow(specular, SPECULAR_HIGHLIGHT);
+  color += specular * LIGHT_COLOR * (k * SPECULAR_MULT);
 
+  // diffuse lighting
   k = min(k, SHADOW_DARKNESS * 0.5 * (dot(norm, LIGHT_DIRECTION) - 1.) + 1.);
 
   k = max(k, 1.0 - SHADOW_DARKNESS);
@@ -327,7 +328,7 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   rotateAboutX(camera, -0.3);
   rotateAboutY(camera, -2.365);
   translate(camera, -3.40191, 4.14347, -3.48312);
-  translate(camera, 0, 1, -2);
+  // translate(camera, 0, -1, -1);
 
   createEffect<Vec>((prevPos) => {
     const pos = mouse.pos();
