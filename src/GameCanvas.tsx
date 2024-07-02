@@ -89,6 +89,7 @@ const SPECULAR_HIGHLIGHT = 40;
 const SPECULAR_MULT = 0.25;
 const SUN_SHARPNESS = 2.0;
 const SUN_SIZE = 0.004;
+const VIGNETTE_STRENGTH = 0.5;
 
 struct RayMarchResult {
   // The position we ended the ray march in
@@ -253,14 +254,17 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   var uv = 2. * fragUV - 1.;
   uv.x *= iResolution.x / iResolution.y;
 
-  var position = camera[3];
   var dir = (camera * normalize(vec4f(uv.x, uv.y, -FOCAL_DIST, 0.0))).xyz;
+  var position = camera[3];
 
   let march = rayMarch(position, dir, 1.0);
   let minDist = max(FOVperPixel * march.distance, EPSILON);
   if (march.headroom > minDist) {
       // The ray did not hit the target
       var color = BACKGROUND_COLOR;
+
+      let vignette = 1.0 - VIGNETTE_STRENGTH * length(fragUV * 0.5);
+      color = vec4f(color.xyz * vignette, 1);
     
       // "spec" for specular
       var sunSpec = dot(dir, LIGHT_DIRECTION) - 1.0 + SUN_SIZE;
@@ -280,24 +284,24 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   var k = 1.;
 
   // shadows
-  let lightMarch = rayMarch(
-    vec4f(endPoint + norm * EPSILON * 100., 1.), 
-    LIGHT_DIRECTION, 
-    0
-  );
-  k = lightMarch.minHeadroom * min(lightMarch.distance, 1.0);
+  // let lightMarch = rayMarch(
+  //   vec4f(endPoint + norm * EPSILON * 100., 1.), 
+  //   LIGHT_DIRECTION, 
+  //   0
+  // );
+  // k = lightMarch.minHeadroom * min(lightMarch.distance, 1.0);
 
-  let reflected = dir - 2. * dot(dir, norm) * norm;
-  var specular = max(dot(reflected, LIGHT_DIRECTION), 0.0);
-  specular = pow(specular, SPECULAR_HIGHLIGHT);
-  color += specular * LIGHT_COLOR * (k * SPECULAR_MULT);
+  // let reflected = dir - 2. * dot(dir, norm) * norm;
+  // var specular = max(dot(reflected, LIGHT_DIRECTION), 0.0);
+  // specular = pow(specular, SPECULAR_HIGHLIGHT);
+  // color += specular * LIGHT_COLOR * (k * SPECULAR_MULT);
 
   k = max(k, 1.0 - SHADOW_DARKNESS);
 
-  color += fracColor * LIGHT_COLOR * k;
+  color += fracColor;// * LIGHT_COLOR * k;
 
-  let a = 1.0 / (1.0 + march.steps * AMBIENT_OCCLUSION_STRENGTH);
-  color += (1.0 - a) * AMBIENT_OCCLUSION_COLOR_DELTA;
+  // let a = 1.0 / (1.0 + march.steps * AMBIENT_OCCLUSION_STRENGTH);
+  // color += (1.0 - a) * AMBIENT_OCCLUSION_COLOR_DELTA;
   
   return vec4f(saturate(color), 1.);
 }
@@ -313,8 +317,8 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
 
   const camera = new MatrixBinary();
   rotateAboutX(camera, -0.3);
-  rotateAboutY(camera, -2);
-  translate(camera, -2.95862, 2.68825, -1.11868);
+  rotateAboutY(camera, -2.365);
+  translate(camera, -3.40191, 4.14347, -3.48312);
   translate(camera, 0, 1, -2);
 
   createEffect<Vec>((prevPos) => {
@@ -344,11 +348,11 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
         />
       </BindGroup>
       <BindGroup>
-        <UniformScalar label="iFracScale" type="f32" value={1.8} />
-        <UniformScalar label="iFracAng1" type="f32" value={-0.12} />
-        <UniformScalar label="iFracAng2" type="f32" value={0.5} />
-        <UniformVector label="iFracShift" value={[-2.12, -2.75, 0.49]} />
-        <UniformVector label="iFracCol" value={[0.42, 0.38, 0.19]} />
+        <UniformScalar label="iFracScale" type="f32" value={1.9073} />
+        <UniformScalar label="iFracAng1" type="f32" value={-9.83} />
+        <UniformScalar label="iFracAng2" type="f32" value={-1.16} />
+        <UniformVector label="iFracShift" value={[-3.508, -3.593, 3.295]} />
+        <UniformVector label="iFracCol" value={[-0.34, 0.12, -0.08]} />
       </BindGroup>
     </RenderShader>
   );
