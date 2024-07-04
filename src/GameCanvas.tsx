@@ -48,7 +48,11 @@ fn vertex_main(@builtin(vertex_index) index: u32) -> VertexOutput {
   );
 }`;
 
-export function GameCanvas() {
+export type GameCanvasProps = {
+  cameraMatrix: Float32Array;
+};
+
+export function GameCanvas(props: GameCanvasProps) {
   const MyTestShaderCode = `
 ${RENDER_QUAD}
 
@@ -319,33 +323,6 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
 
   const { canvas } = useContext(CanvasContext);
 
-  const [mouse, trackMouseInElement] = createMouseTracker();
-
-  trackMouseInElement(canvas);
-
-  const camera = new MatrixBinary();
-  rotateAboutX(camera, -0.3);
-  rotateAboutY(camera, -2.365);
-  translate(camera, -3.40191, 4.14347, -3.48312);
-  translate(camera, 0, 1, 0);
-
-  const [cameraMatrix, setCameraMatrix] = createSignal(camera.snapshot());
-
-  createEffect<Vec>((prevPos) => {
-    const pos = mouse.pos();
-
-    if (mouse.buttons()) {
-      let diff = prevPos ? subtractVec(pos, prevPos) : VEC_ZERO;
-
-      diff = scale(diff, 1 / canvas.width);
-      translate(camera, diff.x, diff.y, 0);
-
-      setCameraMatrix(camera.snapshot());
-    }
-
-    return pos;
-  });
-
   return (
     <RenderShader
       label="Test Shader"
@@ -355,7 +332,7 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
       draw={4}
     >
       <BindGroup>
-        <UniformBuffer label="camera" bytes={cameraMatrix()} />
+        <UniformBuffer label="camera" bytes={props.cameraMatrix} />
         <UniformVector
           label="iResolution"
           value={[canvas.width, canvas.height]}

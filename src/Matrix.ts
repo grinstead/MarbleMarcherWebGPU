@@ -2,7 +2,7 @@ const SCRATCH_MATRIX = new Float32Array(16);
 const SCRATCH_RESULT = new Float32Array(16);
 
 // prettier-ignore
-const IDENTITY = new Float32Array([
+export const IDENTITY = new Float32Array([
   1, 0, 0, 0,
   0, 1, 0, 0,
   0, 0, 1, 0,
