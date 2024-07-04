@@ -341,7 +341,6 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
       translate(camera, diff.x, diff.y, 0);
 
       setCameraMatrix(camera.snapshot());
-      console.log("SHIFTING", diff);
     }
 
     return pos;
