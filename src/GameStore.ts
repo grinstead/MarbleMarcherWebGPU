@@ -8,5 +8,8 @@ export type GameStore = {
 };
 
 export function createGameStore() {
-  return createStore<GameStore>({ level: levels[0], cameraMatrix: IDENTITY });
+  return createStore<GameStore>({
+    level: { ...levels[0] },
+    cameraMatrix: IDENTITY,
+  });
 }
