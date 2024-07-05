@@ -32,7 +32,7 @@ export type GameUIProps = {
 export function GameUI(props: GameUIProps) {
   const [mouse, trackMouseInElement] = createMouseTracker();
 
-  const isSelected = createSelector(() => props.store.level.title);
+  const initialSelected = props.store.level.title;
 
   const camera = new MatrixBinary();
 
@@ -67,12 +67,14 @@ export function GameUI(props: GameUIProps) {
       <select
         oninput={(e) => {
           const { value } = e.target as HTMLSelectElement;
-          props.setStore("level", levels[value as any as number]);
+          const level = levels.find((l) => l.title === value);
+          console.log("setting level", level);
+          props.setStore("level", level!);
         }}
       >
         <For each={levels}>
           {(l, i) => (
-            <option value={i()} selected={isSelected(l.title)}>
+            <option value={l.title} selected={l.title === initialSelected}>
               {l.title}
             </option>
           )}
