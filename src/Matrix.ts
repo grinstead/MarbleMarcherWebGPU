@@ -17,6 +17,11 @@ export class MatrixBinary {
     this.columnMajor = new Float32Array(copyFrom);
   }
 
+  set(data: Float32Array) {
+    claimMatrix(this);
+    this.columnMajor.set(data);
+  }
+
   snapshot() {
     this.copyOnWrite = true;
     return this.columnMajor;

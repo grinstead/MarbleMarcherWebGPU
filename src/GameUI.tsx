@@ -6,12 +6,21 @@ import {
   subtractVec,
 } from "@grinstead/ambush";
 import {
+  IDENTITY,
   MatrixBinary,
   rotateAboutX,
   rotateAboutY,
   translate,
 } from "./Matrix.ts";
-import { Setter, createEffect } from "solid-js";
+import {
+  For,
+  Setter,
+  createEffect,
+  createRenderEffect,
+  createSelector,
+  createSignal,
+} from "solid-js";
+import { levels } from "./LevelData.ts";
 
 export type GameUIProps = {
   setCameraMatrix: Setter<Float32Array>;
@@ -20,11 +29,20 @@ export type GameUIProps = {
 export function GameUI(props: GameUIProps) {
   const [mouse, trackMouseInElement] = createMouseTracker();
 
+  const [level, setLevel] = createSignal(levels[1]);
+  const isSelected = createSelector(level);
+
   const camera = new MatrixBinary();
-  rotateAboutX(camera, -0.3);
-  rotateAboutY(camera, -2.365);
-  translate(camera, -3.40191, 4.14347, -3.48312);
-  translate(camera, 0, 1, 0);
+
+  createRenderEffect(() => {
+    const { marblePosition, startLookDirection } = level();
+
+    camera.set(IDENTITY);
+    rotateAboutX(camera, -0.3);
+    rotateAboutY(camera, startLookDirection);
+    translate(camera, marblePosition.x, marblePosition.y, marblePosition.z);
+    translate(camera, 0, 1, 0);
+  });
 
   props.setCameraMatrix(camera.snapshot());
 
@@ -45,7 +63,20 @@ export function GameUI(props: GameUIProps) {
 
   return (
     <div ref={trackMouseInElement} class="overlay">
-      The game engine
+      <select
+        oninput={(e) => {
+          const { value } = e.target as HTMLSelectElement;
+          setLevel(levels[value as any as number]);
+        }}
+      >
+        <For each={levels}>
+          {(l, i) => (
+            <option value={i()} selected={isSelected(l)}>
+              {l.title}
+            </option>
+          )}
+        </For>
+      </select>
     </div>
   );
 }
