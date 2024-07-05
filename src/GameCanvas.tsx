@@ -1,28 +1,15 @@
 import {
   BindGroup,
   CanvasContext,
-  Matrix4x4,
   RenderShader,
   UniformBuffer,
   UniformScalar,
   UniformVector,
-  VEC_ZERO,
-  Vec,
-  addVec,
-  createMouseTracker,
-  scale,
-  scaleCoords,
-  subtractVec,
-  vec,
+  rgbArray,
+  xyzArray,
 } from "@grinstead/ambush";
-import { createEffect, createMemo, createSignal, useContext } from "solid-js";
-import {
-  MatrixBinary,
-  rotateAboutX,
-  rotateAboutY,
-  rotateAboutZ,
-  translate,
-} from "./Matrix.ts";
+import { useContext } from "solid-js";
+import { GameStore } from "./GameStore.ts";
 
 const RENDER_QUAD = `
 struct VertexOutput {
@@ -49,7 +36,7 @@ fn vertex_main(@builtin(vertex_index) index: u32) -> VertexOutput {
 }`;
 
 export type GameCanvasProps = {
-  cameraMatrix: Float32Array;
+  store: GameStore;
 };
 
 export function GameCanvas(props: GameCanvasProps) {
@@ -332,18 +319,36 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
       draw={4}
     >
       <BindGroup>
-        <UniformBuffer label="camera" bytes={props.cameraMatrix} />
+        <UniformBuffer label="camera" bytes={props.store.cameraMatrix} />
         <UniformVector
           label="iResolution"
           value={[canvas.width, canvas.height]}
         />
       </BindGroup>
       <BindGroup>
-        <UniformScalar label="iFracScale" type="f32" value={1.9073} />
-        <UniformScalar label="iFracAng1" type="f32" value={-9.83} />
-        <UniformScalar label="iFracAng2" type="f32" value={-1.16} />
-        <UniformVector label="iFracShift" value={[-3.508, -3.593, 3.295]} />
-        <UniformVector label="iFracCol" value={[-0.34, 0.12, -0.08]} />
+        <UniformScalar
+          label="iFracScale"
+          type="f32"
+          value={props.store.level.scale}
+        />
+        <UniformScalar
+          label="iFracAng1"
+          type="f32"
+          value={props.store.level.angle1}
+        />
+        <UniformScalar
+          label="iFracAng2"
+          type="f32"
+          value={props.store.level.angle2}
+        />
+        <UniformVector
+          label="iFracShift"
+          value={xyzArray(props.store.level.offset)}
+        />
+        <UniformVector
+          label="iFracCol"
+          value={rgbArray(props.store.level.color)}
+        />
       </BindGroup>
     </RenderShader>
   );

@@ -21,30 +21,31 @@ import {
   createSignal,
 } from "solid-js";
 import { levels } from "./LevelData.ts";
+import { GameStore } from "./GameStore.ts";
+import { SetStoreFunction } from "solid-js/store";
 
 export type GameUIProps = {
-  setCameraMatrix: Setter<Float32Array>;
+  store: GameStore;
+  setStore: SetStoreFunction<GameStore>;
 };
 
 export function GameUI(props: GameUIProps) {
   const [mouse, trackMouseInElement] = createMouseTracker();
 
-  const [level, setLevel] = createSignal(levels[1]);
-  const isSelected = createSelector(level);
+  const isSelected = createSelector(() => props.store.level.title);
 
   const camera = new MatrixBinary();
 
   createRenderEffect(() => {
-    const { marblePosition, startLookDirection } = level();
+    const { marblePosition, startLookDirection } = props.store.level;
 
     camera.set(IDENTITY);
     rotateAboutX(camera, -0.3);
     rotateAboutY(camera, startLookDirection);
     translate(camera, marblePosition.x, marblePosition.y, marblePosition.z);
     translate(camera, 0, 1, 0);
+    props.setStore("cameraMatrix", camera.snapshot());
   });
-
-  props.setCameraMatrix(camera.snapshot());
 
   createEffect<Vec>((prevPos) => {
     const pos = mouse.pos();
@@ -55,7 +56,7 @@ export function GameUI(props: GameUIProps) {
       diff = scale(diff, 1 / 320);
       translate(camera, diff.x, diff.y, 0);
 
-      props.setCameraMatrix(camera.snapshot());
+      props.setStore("cameraMatrix", camera.snapshot());
     }
 
     return pos;
@@ -66,12 +67,12 @@ export function GameUI(props: GameUIProps) {
       <select
         oninput={(e) => {
           const { value } = e.target as HTMLSelectElement;
-          setLevel(levels[value as any as number]);
+          props.setStore("level", levels[value as any as number]);
         }}
       >
         <For each={levels}>
           {(l, i) => (
-            <option value={i()} selected={isSelected(l)}>
+            <option value={i()} selected={isSelected(l.title)}>
               {l.title}
             </option>
           )}
