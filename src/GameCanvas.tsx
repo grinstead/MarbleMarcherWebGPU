@@ -1,14 +1,11 @@
 import {
-  BindGroup,
-  CanvasContext,
-  RenderShader,
-  UniformBuffer,
-  UniformScalar,
-  UniformVector,
+  BufferBinding,
+  RenderPipeline,
+  ScalarBinding,
+  VectorBinding,
   rgbArray,
   xyzArray,
 } from "@grinstead/ambush";
-import { useContext } from "solid-js";
 import { GameStore } from "./GameStore.ts";
 
 const RENDER_QUAD = `
@@ -308,48 +305,52 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
     
     `;
 
-  const { canvas } = useContext(CanvasContext);
-
   return (
-    <RenderShader
-      label="Test Shader"
-      code={MyTestShaderCode}
-      vertexMain="vertex_main"
-      fragmentMain="fragment_main"
-      draw={4}
-    >
-      <BindGroup>
-        <UniformBuffer label="camera" bytes={props.store.cameraMatrix} />
-        <UniformVector
-          label="iResolution"
-          value={[canvas.width, canvas.height]}
-        />
-      </BindGroup>
-      <BindGroup>
-        <UniformScalar
-          label="iFracScale"
-          type="f32"
-          value={props.store.level.scale}
-        />
-        <UniformScalar
-          label="iFracAng1"
-          type="f32"
-          value={props.store.level.angle1}
-        />
-        <UniformScalar
-          label="iFracAng2"
-          type="f32"
-          value={props.store.level.angle2}
-        />
-        <UniformVector
-          label="iFracShift"
-          value={xyzArray(props.store.level.offset)}
-        />
-        <UniformVector
-          label="iFracCol"
-          value={rgbArray(props.store.level.color)}
-        />
-      </BindGroup>
-    </RenderShader>
+    <>
+      <RenderPipeline
+        label="Test Shader"
+        code={MyTestShaderCode}
+        vertexMain="vertex_main"
+        fragmentMain="fragment_main"
+        draw={4}
+      />
+      <BufferBinding
+        label="camera"
+        group={0}
+        id={0}
+        value={props.store.cameraMatrix}
+      />
+      <VectorBinding label="iResolution" group={0} id={1} value={[640, 480]} />
+      <ScalarBinding
+        label="iFracScale"
+        group={1}
+        id={0}
+        value={props.store.level.scale}
+      />
+      <ScalarBinding
+        label="iFracAng1"
+        group={1}
+        id={1}
+        value={props.store.level.angle1}
+      />
+      <ScalarBinding
+        label="iFracAng2"
+        group={1}
+        id={2}
+        value={props.store.level.angle2}
+      />
+      <VectorBinding
+        label="iFracShift"
+        group={1}
+        id={3}
+        value={xyzArray(props.store.level.offset)}
+      />
+      <VectorBinding
+        label="iFracCol"
+        group={1}
+        id={4}
+        value={rgbArray(props.store.level.color)}
+      />
+    </>
   );
 }
