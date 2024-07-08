@@ -51,7 +51,7 @@ export function GameUI(props: GameUIProps) {
   createEffect<Vec>((prevPos) => {
     const pos = mouse.pos();
 
-    if (mouse.buttons()) {
+    if (!props.store.paused && mouse.buttons()) {
       let diff = prevPos ? subtractVec(pos, prevPos) : VEC_ZERO;
 
       diff = scale(diff, 1 / 320);
@@ -60,17 +60,28 @@ export function GameUI(props: GameUIProps) {
       props.setStore("cameraMatrix", camera.snapshot());
     }
 
-    props.setStore("paused", !mouse.tracked());
-
     return pos;
   });
 
   return (
     <div
-      ref={trackMouseInElement}
+      ref={(div) => {
+        trackMouseInElement(div);
+        requestAnimationFrame(() => {
+          div.focus();
+        });
+      }}
+      tabIndex={1}
+      onfocus={() => {
+        props.setStore("paused", false);
+      }}
+      onblur={() => {
+        props.setStore("paused", true);
+      }}
       class={classnames("overlay", props.store.paused && "paused")}
     >
       <select
+        tabIndex={2}
         oninput={(e) => {
           const { value } = e.target as HTMLSelectElement;
           const level = levels.find((l) => l.title === value);

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@grinstead/ambush": "^0.0.3",
+    "@grinstead/classnames": "^1.0.3",
     "solid-js": "^1.8.15"
   },
   "devDependencies": {
