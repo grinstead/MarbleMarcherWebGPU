@@ -36,7 +36,7 @@ export type GameCanvasProps = {
   store: GameStore;
 };
 
-export function GameCanvas(props: GameCanvasProps) {
+export function Graphics(props: GameCanvasProps) {
   const MyTestShaderCode = `
 ${RENDER_QUAD}
 
