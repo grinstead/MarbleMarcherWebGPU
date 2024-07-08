@@ -10,9 +10,7 @@ const FPS_WEIGHTING = 0.1;
 function App() {
   const [store, setStore] = createGameStore();
 
-  const canvas = (
-    <canvas class="canvas" width={640} height={480} />
-  ) as HTMLCanvasElement;
+  let canvas: undefined | HTMLCanvasElement;
 
   const [renderTime, setRenderTime] = createSignal<number>();
 
@@ -23,8 +21,8 @@ function App() {
     <>
       <h1 id="logo">Marble Marcher (WebGPU)</h1>
       <div class="game">
-        {canvas}
-        <GPUContainer canvas={canvas}>
+        <canvas ref={canvas} class="canvas" width={640} height={480} />
+        <GPUContainer canvas={canvas!}>
           <GPUWorkQueue.Provider
             ref={manager}
             onHasWork={() => {
