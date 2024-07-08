@@ -15,6 +15,7 @@ import {
 import {
   For,
   Setter,
+  Show,
   createEffect,
   createRenderEffect,
   createSelector,
@@ -72,6 +73,12 @@ export function GameUI(props: GameUIProps) {
         });
       }}
       tabIndex={1}
+      onkeydown={(e) => {
+        if (e.key === "w") {
+          translate(camera, 0, 0, 1 / 32);
+          props.setStore("cameraMatrix", camera.snapshot());
+        }
+      }}
       onfocus={() => {
         props.setStore("paused", false);
       }}
@@ -97,6 +104,9 @@ export function GameUI(props: GameUIProps) {
           )}
         </For>
       </select>
+      <Show when={props.store.paused}>
+        <p>Paused</p>
+      </Show>
     </div>
   );
 }
