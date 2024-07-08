@@ -2,8 +2,14 @@ import "./App.css";
 import { Graphics } from "./Graphics.tsx";
 import { GameUI } from "./GameUI.tsx";
 import { createGameStore } from "./GameStore.ts";
-import { GPUContainer, GPUWorkQueue } from "@grinstead/ambush";
-import { createSignal } from "solid-js";
+import {
+  E_GPU_NOSUPPORT,
+  GPUContainer,
+  GPULoadError,
+  GPUWorkQueue,
+  GPU_LOAD_ERROR,
+} from "@grinstead/ambush";
+import { ErrorBoundary, createSignal } from "solid-js";
 
 const FPS_WEIGHTING = 0.1;
 
@@ -20,21 +26,36 @@ function App() {
   return (
     <>
       <h1 id="logo">Marble Marcher (WebGPU)</h1>
-      <div class="game">
-        <canvas ref={canvas} class="canvas" width={640} height={480} />
-        <GPUContainer canvas={canvas!}>
-          <GPUWorkQueue.Provider
-            ref={manager}
-            onHasWork={() => {
-              renderTimer ??= requestAnimationFrame(render);
-            }}
-          >
-            <Graphics store={store} />
-            <GameUI store={store} setStore={setStore} />
-          </GPUWorkQueue.Provider>
-        </GPUContainer>
-      </div>
-      <p>{Math.round(1000 / (renderTime() ?? 15))} fps</p>
+      <ErrorBoundary
+        fallback={(e) => {
+          if (e instanceof GPULoadError && e.code === E_GPU_NOSUPPORT) {
+            return (
+              <div>
+                Your Browser does not support WebGPU, consider{" "}
+                <a href="https://www.google.com/chrome/dr/download/">Chrome</a>
+              </div>
+            );
+          }
+
+          return <div>{String(e)}</div>;
+        }}
+      >
+        <div class="game">
+          <canvas ref={canvas} class="canvas" width={640} height={480} />
+          <GPUContainer canvas={canvas!}>
+            <GPUWorkQueue.Provider
+              ref={manager}
+              onHasWork={() => {
+                renderTimer ??= requestAnimationFrame(render);
+              }}
+            >
+              <Graphics store={store} />
+              <GameUI store={store} setStore={setStore} />
+            </GPUWorkQueue.Provider>
+          </GPUContainer>
+        </div>
+        <p>{Math.round(1000 / (renderTime() ?? 15))} fps</p>
+      </ErrorBoundary>
     </>
   );
 
