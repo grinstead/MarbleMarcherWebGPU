@@ -15,6 +15,10 @@ Marble Marcher is a physics-based game where players navigate a marble through v
 
 This project is just getting started.
 
+## Getting Started
+
+Download the repo, run `npm install` then `npm run dev`.
+
 ## Contributing
 
 If you're interested in contributing to this project, the best way to get started is to message me directly. Whether you have experience with WebGPU, SolidJS, or game development in general, your help would be appreciated.
