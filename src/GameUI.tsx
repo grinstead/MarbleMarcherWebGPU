@@ -23,6 +23,7 @@ import {
 import { levels } from "./LevelData.ts";
 import { GameStore } from "./GameStore.ts";
 import { SetStoreFunction } from "solid-js/store";
+import { classnames } from "@grinstead/classnames";
 
 export type GameUIProps = {
   store: GameStore;
@@ -59,11 +60,16 @@ export function GameUI(props: GameUIProps) {
       props.setStore("cameraMatrix", camera.snapshot());
     }
 
+    props.setStore("paused", !mouse.tracked());
+
     return pos;
   });
 
   return (
-    <div ref={trackMouseInElement} class="overlay">
+    <div
+      ref={trackMouseInElement}
+      class={classnames("overlay", props.store.paused && "paused")}
+    >
       <select
         oninput={(e) => {
           const { value } = e.target as HTMLSelectElement;
@@ -73,7 +79,7 @@ export function GameUI(props: GameUIProps) {
         }}
       >
         <For each={levels}>
-          {(l, i) => (
+          {(l) => (
             <option value={l.title} selected={l.title === initialSelected}>
               {l.title}
             </option>
