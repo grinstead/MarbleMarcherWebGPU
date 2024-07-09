@@ -6,6 +6,9 @@ export type GameStore = {
   level: LevelData;
   paused: boolean;
   cameraMatrix: Float32Array;
+  frame: number;
+  // time in seconds, with ms precision
+  time: number;
 };
 
 export function createGameStore() {
@@ -13,5 +16,7 @@ export function createGameStore() {
     level: { ...levels[0] },
     paused: true,
     cameraMatrix: IDENTITY,
+    frame: 0,
+    time: 0,
   });
 }

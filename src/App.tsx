@@ -4,21 +4,21 @@ import { GameUI } from "./GameUI.tsx";
 import { createGameStore } from "./GameStore.ts";
 import {
   E_GPU_NOSUPPORT,
+  FrameTimer,
   GPUContainer,
   GPULoadError,
   GPUWorkQueue,
-  GPU_LOAD_ERROR,
+  lerp,
 } from "@grinstead/ambush";
-import { ErrorBoundary, createSignal } from "solid-js";
-
-const FPS_WEIGHTING = 0.1;
+import { ErrorBoundary, batch, createSignal } from "solid-js";
+import { produce } from "solid-js/store";
 
 function App() {
   const [store, setStore] = createGameStore();
+  const [fps, setFps] = createSignal(0);
+  const timer = new FrameTimer();
 
   let canvas: undefined | HTMLCanvasElement;
-
-  const [renderTime, setRenderTime] = createSignal<number>();
 
   let manager: undefined | GPUWorkQueue;
   let renderTimer: undefined | ReturnType<typeof requestAnimationFrame>;
@@ -54,23 +54,32 @@ function App() {
             </GPUWorkQueue.Provider>
           </GPUContainer>
         </div>
-        <p>{Math.round(1000 / (renderTime() ?? 15))} fps</p>
+        <pre>
+          {Math.floor(store.time)} in-game seconds / {fps()} fps
+        </pre>
       </ErrorBoundary>
     </>
   );
 
   function render() {
-    const start = performance.now();
+    timer.markFrame();
 
     renderTimer = undefined;
     manager!.runQueued();
 
-    requestAnimationFrame(() => {
-      const ms = performance.now() - start;
-      setRenderTime(
-        (prev = ms) => FPS_WEIGHTING * ms + (1 - FPS_WEIGHTING) * prev
+    if (store.paused) {
+      timer.pause();
+    } else {
+      // setFps((prev) => lerp(prev, timer.fps, 0.1));
+      setFps(timer.fps);
+
+      setStore(
+        produce((state) => {
+          state.frame = timer.frame;
+          state.time = timer.time / 1000;
+        })
       );
-    });
+    }
   }
 }
 

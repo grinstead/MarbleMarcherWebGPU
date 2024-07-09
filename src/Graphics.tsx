@@ -38,24 +38,6 @@ export type GameCanvasProps = {
 };
 
 export function Graphics(props: GameCanvasProps) {
-  const [frame, setFrame] = createSignal(0);
-
-  let frameTimer: undefined | number;
-  onMount(() => {
-    function updateFrame() {
-      setFrame((prev) => prev + 1);
-      frameTimer = requestAnimationFrame(updateFrame);
-    }
-
-    updateFrame();
-  });
-
-  onCleanup(() => {
-    if (frameTimer != null) {
-      cancelAnimationFrame(frameTimer);
-    }
-  });
-
   const MyTestShaderCode = `
 ${RENDER_QUAD}
 
@@ -406,7 +388,7 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
 
           return (
             props.store.level.angle1 +
-            (anim && anim * Math.sin(frame() * 0.015))
+            (anim && anim * Math.sin(props.store.frame * 0.015))
           );
         })()}
       />
@@ -419,7 +401,7 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
 
           return (
             props.store.level.angle2 +
-            (anim && anim * Math.sin(frame() * 0.015))
+            (anim && anim * Math.sin(props.store.frame * 0.015))
           );
         })()}
       />
@@ -432,7 +414,7 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
           const offset = xyzArray(props.store.level.offset);
 
           if (anim) {
-            offset[1] += anim * Math.sin(frame() * 0.015);
+            offset[1] += anim * Math.sin(props.store.frame * 0.015);
           }
 
           return offset;
