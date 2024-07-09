@@ -7,6 +7,7 @@ import {
   xyzArray,
 } from "@grinstead/ambush";
 import { GameStore } from "./GameStore.ts";
+import { createSignal, onCleanup, onMount } from "solid-js";
 
 const RENDER_QUAD = `
 struct VertexOutput {
@@ -37,6 +38,24 @@ export type GameCanvasProps = {
 };
 
 export function Graphics(props: GameCanvasProps) {
+  const [frame, setFrame] = createSignal(0);
+
+  let frameTimer: undefined | number;
+  onMount(() => {
+    function updateFrame() {
+      setFrame((prev) => prev + 1);
+      frameTimer = requestAnimationFrame(updateFrame);
+    }
+
+    updateFrame();
+  });
+
+  onCleanup(() => {
+    if (frameTimer != null) {
+      cancelAnimationFrame(frameTimer);
+    }
+  });
+
   const MyTestShaderCode = `
 ${RENDER_QUAD}
 
@@ -382,19 +401,42 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
         label="iFracAng1"
         group={1}
         id={1}
-        value={props.store.level.angle1}
+        value={(() => {
+          const anim = props.store.level.animation.x;
+
+          return (
+            props.store.level.angle1 +
+            (anim && anim * Math.sin(frame() * 0.015))
+          );
+        })()}
       />
       <ScalarBinding
         label="iFracAng2"
         group={1}
         id={2}
-        value={props.store.level.angle2}
+        value={(() => {
+          const anim = props.store.level.animation.y;
+
+          return (
+            props.store.level.angle2 +
+            (anim && anim * Math.sin(frame() * 0.015))
+          );
+        })()}
       />
       <VectorBinding
         label="iFracShift"
         group={1}
         id={3}
-        value={xyzArray(props.store.level.offset)}
+        value={(() => {
+          const anim = props.store.level.animation.z;
+          const offset = xyzArray(props.store.level.offset);
+
+          if (anim) {
+            offset[1] += anim * Math.sin(frame() * 0.015);
+          }
+
+          return offset;
+        })()}
       />
       <VectorBinding
         label="iFracCol"
