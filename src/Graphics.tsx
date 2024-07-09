@@ -53,6 +53,9 @@ ${RENDER_QUAD}
 @group(1) @binding(2) var<uniform> iFracAng2: f32;
 @group(1) @binding(3) var<uniform> iFracShift: vec3f;
 @group(1) @binding(4) var<uniform> iFracCol: vec3f;
+@group(1) @binding(5) var<uniform> iMarbleRad: f32;
+
+@group(2) @binding(0) var<uniform> iMarblePos: vec3f;
 
 fn inCamera(position: vec4f) -> vec3f {
   let transformed = camera * position;
@@ -79,6 +82,16 @@ const SUN_SHARPNESS = 2.0;
 const SUN_SIZE = 0.004;
 const VIGNETTE_STRENGTH = 0.5;
 
+const ID_VOID = 0;
+const ID_FRACTAL = 1;
+const ID_MARBLE = 2;
+const ID_FLAG = 3;
+
+struct DistanceAndShape {
+  headroom: f32,
+  shape: u32,
+}
+
 struct RayMarchResult {
   // The position we ended the ray march in
   endPoint: vec4f,
@@ -87,6 +100,7 @@ struct RayMarchResult {
   minHeadroom: f32,
   distance: f32,
   steps: f32,
+  shape: u32,
 }
 
 fn rotX(p: vec4f, a: f32) -> vec4f {
@@ -184,8 +198,19 @@ fn col_fractal(point: vec4f) -> vec4f {
   return vec4f(orbit, 1);
 }
 
-fn estimateHeadroom(point: vec4f) -> f32 {
-  return de_fractal(point);
+fn estimateHeadroom(point: vec4f) -> DistanceAndShape {
+  var result = DistanceAndShape(
+    de_fractal(point),
+    ID_FRACTAL,
+  );
+  
+  let dist = de_sphere(point.xyz - iMarblePos, iMarbleRad);
+  if (dist <= result.headroom) {
+    result.headroom = dist;
+    result.shape = ID_MARBLE;
+  }
+
+  return result;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -196,10 +221,10 @@ fn estimateHeadroom(point: vec4f) -> f32 {
 fn calcNormal(point: vec4f, offset: f32) -> vec3f {
   let k = vec3f(1, -1, 0);
 	return normalize(
-    k.xyy * estimateHeadroom(point + k.xyyz * offset) +
-		k.yyx * estimateHeadroom(point + k.yyxz * offset) +
-		k.yxy * estimateHeadroom(point + k.yxyz * offset) +
-		k.xxx * estimateHeadroom(point + k.xxxz * offset)
+    k.xyy * estimateHeadroom(point + k.xyyz * offset).headroom +
+		k.yyx * estimateHeadroom(point + k.yyxz * offset).headroom +
+		k.yxy * estimateHeadroom(point + k.yxyz * offset).headroom +
+		k.xxx * estimateHeadroom(point + k.xxxz * offset).headroom
   );
 }
 
@@ -212,32 +237,32 @@ fn rayMarch(start: vec4f, direction: vec3f, sharpness: f32) -> RayMarchResult {
   var minHeadroom = 1.;
   loop {
     let adjustedMin = max(FOVperPixel * distance, EPSILON);
+ 
+    let estimate = estimateHeadroom(position);
 
-    let headroom = estimateHeadroom(position);
-
-    if (headroom < adjustedMin || distance > MAX_DISTANCE || steps >= MAX_STEPS) {
+    if (estimate.headroom < adjustedMin || distance > MAX_DISTANCE || steps >= MAX_STEPS) {
       return RayMarchResult(
         position,
-        headroom,
+        estimate.headroom,
         minHeadroom,
         distance,
         f32(steps) + select(
           0., 
-          headroom / adjustedMin,
-          headroom < adjustedMin
-        )
+          estimate.headroom / adjustedMin,
+          estimate.headroom < adjustedMin
+        ),
+        select(estimate.shape, ID_VOID, distance > MAX_DISTANCE || steps >= MAX_STEPS)
       );
     }
 
     continuing {
       steps++;
-      distance += headroom;
-      position += vec4f(headroom * direction, 0);
-      minHeadroom = min(minHeadroom, sharpness * headroom / distance);
+      distance += estimate.headroom;
+      position += vec4f(estimate.headroom * direction, 0);
+      minHeadroom = min(minHeadroom, sharpness * estimate.headroom / distance);
     }
   }
 }
-
 
 @fragment
 fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
@@ -251,7 +276,7 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
 
   let march = rayMarch(position, dir, 1.0);
   let minDist = max(FOVperPixel * march.distance, EPSILON);
-  if (march.headroom >= minDist) {
+  if (march.shape == ID_VOID) {
       // The ray did not hit the target
       var color = BACKGROUND_COLOR;
 
@@ -271,9 +296,15 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
   // find closest surface point, without this we get weird coloring artifacts
   let endPoint = march.endPoint.xyz - norm * march.headroom;
   var color = vec3f(0);
-  let fracColor = saturate(
-    col_fractal(vec4f(endPoint, 1)).xyz
-  );
+
+  var materialColor: vec3f;
+  if (march.shape == ID_MARBLE) {
+    materialColor = vec3f(0);
+  } else {
+    materialColor = saturate(
+      col_fractal(vec4f(endPoint, 1)).xyz
+    );
+  }
 
   var k = 1.;
 
@@ -295,7 +326,7 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
 
   k = max(k, 1.0 - SHADOW_DARKNESS);
 
-  color += fracColor * LIGHT_COLOR * k;
+  color += materialColor * LIGHT_COLOR * k;
 
   // let a = 1.0 / (1.0 + march.steps * AMBIENT_OCCLUSION_STRENGTH);
   // color += (1.0 - a) * AMBIENT_OCCLUSION_COLOR_DELTA;
@@ -350,6 +381,18 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
         group={1}
         id={4}
         value={rgbArray(props.store.level.color)}
+      />
+      <ScalarBinding
+        label="iMarbleRad"
+        group={1}
+        id={5}
+        value={props.store.level.marbleRadius}
+      />
+      <VectorBinding
+        label="iMarblePos"
+        group={2}
+        id={0}
+        value={xyzArray(props.store.level.marblePosition)}
       />
     </>
   );
