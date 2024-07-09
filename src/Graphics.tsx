@@ -264,33 +264,9 @@ fn rayMarch(start: vec4f, direction: vec3f, sharpness: f32) -> RayMarchResult {
   }
 }
 
-@fragment
-fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
+fn fractalSurface(dir: vec3f, march: RayMarchResult) -> vec3f {
   let FOVperPixel = 1.0 / max(iResolution.x, 900.0);
-
-  var uv = 2. * fragUV - 1.;
-  uv.x *= iResolution.x / iResolution.y;
-
-  var dir = (camera * normalize(vec4f(uv.x, uv.y, -FOCAL_DIST, 0.0))).xyz;
-  var position = camera[3];
-
-  let march = rayMarch(position, dir, 1.0);
   let minDist = max(FOVperPixel * march.distance, EPSILON);
-  if (march.shape == ID_VOID) {
-      // The ray did not hit the target
-      var color = BACKGROUND_COLOR;
-
-      let vignette = 1.0 - VIGNETTE_STRENGTH * length(fragUV * 0.5);
-      color = vec4f(color.xyz * vignette, 1);
-    
-      // "spec" for specular
-      var sunSpec = dot(dir, LIGHT_DIRECTION) - 1.0 + SUN_SIZE;
-      sunSpec = min(exp(sunSpec * SUN_SHARPNESS / SUN_SIZE), 1.);
-      color += vec4f(LIGHT_COLOR * sunSpec, 0);
-    
-      return color;
-  }
-  
   let norm = calcNormal(march.endPoint, minDist * 0.5);
 
   // find closest surface point, without this we get weird coloring artifacts
@@ -330,8 +306,52 @@ fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
 
   // let a = 1.0 / (1.0 + march.steps * AMBIENT_OCCLUSION_STRENGTH);
   // color += (1.0 - a) * AMBIENT_OCCLUSION_COLOR_DELTA;
+
+  return saturate(color);
+}
+
+@fragment
+fn fragment_main(@location(0) fragUV: vec2f) -> @location(0) vec4f {
+  let FOVperPixel = 1.0 / max(iResolution.x, 900.0);
+
+  var uv = 2. * fragUV - 1.;
+  uv.x *= iResolution.x / iResolution.y;
+
+  var dir = (camera * normalize(vec4f(uv.x, uv.y, -FOCAL_DIST, 0.0))).xyz;
+  var position = camera[3];
+
+  let march = rayMarch(position, dir, 1.0);
+  if (march.shape == ID_VOID) {
+    // The ray did not hit the target
+    var color = BACKGROUND_COLOR;
+
+    let vignette = 1.0 - VIGNETTE_STRENGTH * length(fragUV * 0.5);
+    color = vec4f(color.xyz * vignette, 1);
   
-  return vec4f(saturate(color), 1.);
+    // "spec" for specular
+    var sunSpec = dot(dir, LIGHT_DIRECTION) - 1.0 + SUN_SIZE;
+    sunSpec = min(exp(sunSpec * SUN_SHARPNESS / SUN_SIZE), 1.);
+    color += vec4f(LIGHT_COLOR * sunSpec, 0);
+  
+    return color;
+  } else if (march.shape == ID_MARBLE) {
+    // Refract when entering the marble, and exiting
+    let n = normalize(march.endPoint.xyz - iMarblePos);
+    let q = refract(dir, n, 1.0 / 1.5);
+    let exitPoint = march.endPoint.xyz + (dot(q, n) * 2.0 * iMarbleRad) * q;
+    let exitN = normalize(exitPoint - iMarblePos);
+    let exitQ = q;// (dot(q, dir) * 2.0) * q - dir;
+
+    let exitStep = vec4f(exitPoint + exitN * EPSILON * 10.0, 1.0);
+    let refrCol = fractalSurface(
+      exitQ,
+      rayMarch(exitStep, exitQ, 1.0)
+    );
+
+    return vec4f(refrCol, 1);
+  } else {
+    return vec4f(fractalSurface(dir, march), 1);
+  }
 }
     
     `;
