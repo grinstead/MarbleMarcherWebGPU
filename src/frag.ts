@@ -311,15 +311,15 @@ fn scene(p: ptr<function, vec4<f32>>, ray: ptr<function, vec4<f32>>, vignette: f
 }
 
 @fragment
-fn main(@builtin(position) origFragCoord: vec4<f32>) -> @location(0) vec4<f32> {
-    let fragCoord = vec4f(origFragCoord.x, -origFragCoord.y, origFragCoord.zw);
+fn main(@builtin(position) fragCoord: vec4<f32>) -> @location(0) vec4<f32> {
     FOVperPixel = 1.0 / max(iResolution.x, 900.0);
 
     var col = vec3<f32>(0.0, 0.0, 0.0);
     for (var i: u32 = 0; i < ANTIALIASING_SAMPLES; i = i + 1) {
         for (var j: u32 = 0; j < ANTIALIASING_SAMPLES; j = j + 1) {
             let delta = vec2<f32>(f32(i), f32(j)) / f32(ANTIALIASING_SAMPLES);
-            let screen_pos = (fragCoord.xy + delta) / iResolution.xy;
+            var screen_pos = (fragCoord.xy + delta) / iResolution.xy;
+            screen_pos.y = 1 - screen_pos.y;
 
             var uv = 2.0 * screen_pos - 1.0;
             uv.x *= iResolution.x / iResolution.y;

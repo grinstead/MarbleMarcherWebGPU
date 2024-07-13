@@ -1,9 +1,12 @@
 import {
   VEC_ZERO,
   Vec,
+  addVec,
   createMouseTracker,
   scale,
   subtractVec,
+  vec,
+  xyzArray,
 } from "@grinstead/ambush";
 import {
   IDENTITY,
@@ -39,14 +42,31 @@ export function GameUI(props: GameUIProps) {
   const camera = new MatrixBinary();
 
   createRenderEffect(() => {
-    const { marblePosition, startLookDirection } = props.store.level;
+    const { marblePosition, startLookDirection, marbleRadius } =
+      props.store.level;
+
+    const cameraDistance = 15;
 
     camera.set(IDENTITY);
     rotateAboutX(camera, -0.3);
     rotateAboutY(camera, startLookDirection);
-    translate(camera, marblePosition.x, marblePosition.y, marblePosition.z);
-    translate(camera, 0, 1, 0);
-    props.setStore("cameraMatrix", camera.snapshot());
+
+    let camPos = marblePosition;
+    camPos = addVec(
+      camPos,
+      camera.multVec(vec(0, 0, marbleRadius * cameraDistance))
+    );
+
+    camPos = addVec(
+      camPos,
+      scale(camera.colY(), marbleRadius * cameraDistance * 0.1)
+    );
+
+    const mat = camera.snapshot();
+
+    mat.set(xyzArray(camPos), 12);
+
+    props.setStore("cameraMatrix", mat);
   });
 
   createEffect<Vec>((prevPos) => {
