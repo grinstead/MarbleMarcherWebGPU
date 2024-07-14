@@ -12,6 +12,8 @@ import {
 } from "@grinstead/ambush";
 import { ErrorBoundary, batch, createSignal } from "solid-js";
 import { produce } from "solid-js/store";
+import { Game } from "./Game.tsx";
+import { DebugControls } from "./DebugControls.tsx";
 
 function App() {
   const [store, setStore] = createGameStore();
@@ -50,13 +52,14 @@ function App() {
               }}
             >
               <Graphics store={store} />
-              <GameUI store={store} setStore={setStore} />
+              <Game store={store} setStore={setStore} />
             </GPUWorkQueue.Provider>
           </GPUContainer>
         </div>
         <pre>
           {Math.floor(store.time)} in-game seconds / {fps()} fps
         </pre>
+        <DebugControls store={store} setStore={setStore} />
       </ErrorBoundary>
     </>
   );

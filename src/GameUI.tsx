@@ -15,16 +15,7 @@ import {
   rotateAboutY,
   translate,
 } from "./Matrix.ts";
-import {
-  For,
-  Setter,
-  Show,
-  createEffect,
-  createRenderEffect,
-  createSelector,
-  createSignal,
-} from "solid-js";
-import { levels } from "./LevelData.ts";
+import { For, Show, createEffect, createRenderEffect } from "solid-js";
 import { GameStore } from "./GameStore.ts";
 import { SetStoreFunction } from "solid-js/store";
 import { classnames } from "@grinstead/classnames";
@@ -36,8 +27,6 @@ export type GameUIProps = {
 
 export function GameUI(props: GameUIProps) {
   const [mouse, trackMouseInElement] = createMouseTracker();
-
-  const initialSelected = props.store.level.title;
 
   const camera = new MatrixBinary();
 
@@ -85,48 +74,29 @@ export function GameUI(props: GameUIProps) {
   });
 
   return (
-    <div
-      ref={(div) => {
-        trackMouseInElement(div);
-        requestAnimationFrame(() => {
-          div.focus();
-        });
-      }}
-      tabIndex={1}
-      onkeydown={(e) => {
-        if (e.key === "w") {
-          translate(camera, 0, 0, 1 / 32);
-          props.setStore("cameraMatrix", camera.snapshot());
-        }
-      }}
-      onfocus={() => {
-        props.setStore("paused", false);
-      }}
-      onblur={() => {
-        props.setStore("paused", true);
-      }}
-      class={classnames("overlay", props.store.paused && "paused")}
-    >
-      <select
-        tabIndex={2}
-        oninput={(e) => {
-          const { value } = e.target as HTMLSelectElement;
-          const level = levels.find((l) => l.title === value);
-          console.log("setting level", level);
-          props.setStore("level", level!);
+    <>
+      <div
+        ref={(div) => {
+          trackMouseInElement(div);
+          requestAnimationFrame(() => {
+            div.focus();
+          });
         }}
-      >
-        <For each={levels}>
-          {(l) => (
-            <option value={l.title} selected={l.title === initialSelected}>
-              {l.title}
-            </option>
-          )}
-        </For>
-      </select>
-      <Show when={props.store.paused}>
-        <p>Paused</p>
-      </Show>
-    </div>
+        tabIndex={1}
+        onkeydown={(e) => {
+          if (e.key === "w") {
+            translate(camera, 0, 0, 1 / 32);
+            props.setStore("cameraMatrix", camera.snapshot());
+          }
+        }}
+        onfocus={() => {
+          props.setStore("paused", false);
+        }}
+        onblur={() => {
+          props.setStore("paused", true);
+        }}
+        class={classnames("overlay", props.store.paused && "paused")}
+      ></div>
+    </>
   );
 }
