@@ -68,49 +68,49 @@ fn refraction(rd: vec3f, n: vec3f, p: f32) -> vec3f {
 }
 
 fn planeFold(z: ptr<function, vec4f>, n: vec3f, d: f32) {
-    (*z) -= vec4(2.0 * min(0.0, dot((*z).xyz, n) - d) * n, 0);
+    (*z) -= vec4(2.0 * min(0.0, dot(z.xyz, n) - d) * n, 0);
 }
 
 fn sierpinskiFold(z: ptr<function, vec4f>) {
-    var d = min((*z).x + (*z).y, 0.0);
-    (*z).x -= d;
-    (*z).y -= d;
+    var d = min(z.x + z.y, 0.0);
+    z.x -= d;
+    z.y -= d;
 
-    d = min((*z).x + (*z).z, 0.0);
-    (*z).x -= d;
-    (*z).z -= d;
+    d = min(z.x + z.z, 0.0);
+    z.x -= d;
+    z.z -= d;
 
-    d = min((*z).y + (*z).z, 0.0);
-    (*z).y -= d;
-    (*z).z -= d;
+    d = min(z.y + z.z, 0.0);
+    z.y -= d;
+    z.z -= d;
 }
 
 fn mengerFold(z: ptr<function, vec4f>) {
-    var a = min((*z).x - (*z).y, 0.0);
-    (*z).x -= a;
-    (*z).y += a;
-    a = min((*z).x - (*z).z, 0.0);
-    (*z).x -= a;
-    (*z).z += a;
-    a = min((*z).y - (*z).z, 0.0);
-    (*z).y -= a;
-    (*z).z += a;
+    var a = min(z.x - z.y, 0.0);
+    z.x -= a;
+    z.y += a;
+    a = min(z.x - z.z, 0.0);
+    z.x -= a;
+    z.z += a;
+    a = min(z.y - z.z, 0.0);
+    z.y -= a;
+    z.z += a;
 }
 
 fn boxFold(z: ptr<function, vec4f>, r: vec3f) {
-    *z = vec4f(clamp((*z).xyz, -r, r) * 2.0 - (*z).xyz, (*z).w);
+    *z = vec4f(clamp(z.xyz, -r, r) * 2.0 - z.xyz, z.w);
 }
 
 fn rotX(z: ptr<function, vec4f>, s: f32, c: f32) {
-    *z = vec4f((*z).x, c * (*z).y + s * (*z).z, c * (*z).z - s * (*z).y, (*z).w);
+    *z = vec4f(z.x, c * z.y + s * z.z, c * z.z - s * z.y, z.w);
 }
 
 fn rotY(z: ptr<function, vec4f>, s: f32, c: f32) {
-    *z = vec4f(c * (*z).x - s * (*z).z, (*z).y,  c * (*z).z + s * (*z).x, (*z).w);
+    *z = vec4f(c * z.x - s * z.z, z.y,  c * z.z + s * z.x, z.w);
 }
 
 fn rotZ(z: ptr<function, vec4f>, s: f32, c: f32) {
-    *z = vec4f(c * (*z).x + s * (*z).y, c * (*z).y - s * (*z).x, (*z).z, (*z).w);
+    *z = vec4f(c * z.x + s * z.y, c * z.y - s * z.x, z.zw);
 }
 
 fn de_sphere(p: vec4f, r: f32) -> f32 {
@@ -129,7 +129,7 @@ fn de_tetrahedron(p: vec4f, r: f32) -> f32 {
 
 fn de_capsule(p: vec4f, h: f32, r: f32) -> f32 {
     let py = p.y - clamp(p.y, -h, h);
-    return (length(vec3f(p.x, py, p.z)) - r) / p.w;
+    return (length(p.xyz) - r) / p.w;
 }
 
 fn de_fractal(point: vec4f) -> f32 {
@@ -142,12 +142,12 @@ fn de_fractal(point: vec4f) -> f32 {
         p *= iFracScale;
         p += vec4f(iFracShift, 0);
     }
-    return de_box(p, vec3f(6.0, 6.0, 6.0));
+    return de_box(p, vec3f(6.0));
 }
 
 fn col_fractal(point: vec4f) -> vec4f {
     var p = point;
-    var orbit = vec3f(0.0, 0.0, 0.0);
+    var orbit = vec3f();
     for (var i: u32 = 0; i < FRACTAL_ITER; i = i + 1) {
         p = vec4f(abs(p.xyz), p.w);
         rotZ(&p, iFracAng1.x, iFracAng1.y);
@@ -157,7 +157,7 @@ fn col_fractal(point: vec4f) -> vec4f {
         p += vec4f(iFracShift, 0);
         orbit = max(orbit, p.xyz * iFracCol);
     }
-    return vec4f(orbit, de_box(p, vec3f(6.0, 6.0, 6.0)));
+    return vec4f(orbit, de_box(p, vec3f(6.0)));
 }
 
 fn de_marble(p: vec4f) -> f32 {
@@ -302,7 +302,7 @@ fn scene(p: ptr<function, vec4f>, ray: ptr<function, vec4f>, vignette: f32) -> v
 fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
     FOVperPixel = 1.0 / max(iResolution.x, 900.0);
 
-    var col = vec3f(0.0, 0.0, 0.0);
+    var col = vec3f();
     for (var i: u32 = 0; i < ANTIALIASING_SAMPLES; i = i + 1) {
         for (var j: u32 = 0; j < ANTIALIASING_SAMPLES; j = j + 1) {
             let delta = vec2f(f32(i), f32(j)) / f32(ANTIALIASING_SAMPLES);
@@ -342,8 +342,8 @@ fn main(@builtin(position) fragCoord: vec4f) -> @location(0) vec4f {
         }
     }
 
-    col *= iExposure / (f32(ANTIALIASING_SAMPLES) * f32(ANTIALIASING_SAMPLES));
-    return vec4f(clamp(col, vec3f(0.0, 0.0, 0.0), vec3f(1.0, 1.0, 1.0)), 1.0);
+    col *= iExposure / (f32(ANTIALIASING_SAMPLES * ANTIALIASING_SAMPLES));
+    return vec4f(saturate(col), 1.0);
 }
 
 `;
