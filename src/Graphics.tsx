@@ -29,7 +29,7 @@ export function Graphics(props: GameCanvasProps) {
         id={0}
         value={props.store.cameraMatrix}
       />
-      <VectorBinding label="iResolution" group={0} id={1} value={[640, 480]} />
+      <VectorBinding label="iResolution" group={0} id={1} value={[1280, 720]} />
       <ScalarBinding
         label="iFracScale"
         group={0}

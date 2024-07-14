@@ -41,7 +41,7 @@ function App() {
         }}
       >
         <div class="game">
-          <canvas ref={canvas} class="canvas" width={640} height={480} />
+          <canvas ref={canvas} class="canvas" width={1280} height={720} />
           <GPUContainer canvas={canvas!}>
             <GPUWorkQueue.Provider
               ref={manager}
