@@ -45,7 +45,7 @@ export function Graphics(props: GameCanvasProps) {
 
           return sinCosTanAngle(
             props.store.level.angle1 +
-              (anim && anim * Math.sin(props.store.frame * 0.015))
+              (anim && anim * Math.sin(props.store.time * 0.9))
           );
         })()}
       />
@@ -58,7 +58,7 @@ export function Graphics(props: GameCanvasProps) {
 
           return sinCosTanAngle(
             props.store.level.angle2 +
-              (anim && anim * Math.sin(props.store.frame * 0.015))
+              (anim && anim * Math.sin(props.store.time * 0.9))
           );
         })()}
       />
@@ -71,7 +71,7 @@ export function Graphics(props: GameCanvasProps) {
           const offset = xyzArray(props.store.level.offset);
 
           if (anim) {
-            offset[1] += anim * Math.sin(props.store.frame * 0.015);
+            offset[1] += anim * Math.sin(props.store.time * 0.9);
           }
 
           return offset;
