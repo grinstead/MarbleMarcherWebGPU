@@ -30,8 +30,8 @@ ${RENDER_QUAD}
 @group(0) @binding(1) var<uniform> iResolution: vec2<f32>;
 @group(0) @binding(2) var<uniform> iDebug: vec3<f32>;
 @group(0) @binding(3) var<uniform> iFracScale: f32;
-@group(0) @binding(4) var<uniform> iFracAng1: f32;
-@group(0) @binding(5) var<uniform> iFracAng2: f32;
+@group(0) @binding(4) var<uniform> iFracAng1: vec4f;
+@group(0) @binding(5) var<uniform> iFracAng2: vec4f;
 @group(0) @binding(6) var<uniform> iFracShift: vec3<f32>;
 @group(0) @binding(7) var<uniform> iFracCol: vec3<f32>;
 @group(0) @binding(8) var<uniform> iMarblePos: vec3<f32>;
@@ -113,18 +113,6 @@ fn rotZ(z: ptr<function, vec4<f32>>, s: f32, c: f32) {
     *z = vec4f(c * (*z).x + s * (*z).y, c * (*z).y - s * (*z).x, (*z).z, (*z).w);
 }
 
-fn rotXAngle(z: ptr<function, vec4<f32>>, a: f32) {
-    rotX(z, sin(a), cos(a));
-}
-
-fn rotYAngle(z: ptr<function, vec4<f32>>, a: f32) {
-    rotY(z, sin(a), cos(a));
-}
-
-fn rotZAngle(z: ptr<function, vec4<f32>>, a: f32) {
-    rotZ(z, sin(a), cos(a));
-}
-
 fn de_sphere(p: vec4<f32>, r: f32) -> f32 {
     return (length(p.xyz) - r) / p.w;
 }
@@ -148,9 +136,9 @@ fn de_fractal(point: vec4<f32>) -> f32 {
     var p = point;
     for (var i: u32 = 0; i < FRACTAL_ITER; i = i + 1) {
         p = vec4f(abs(p.xyz), p.w);
-        rotZAngle(&p, iFracAng1);
+        rotZ(&p, iFracAng1.x, iFracAng1.y);
         mengerFold(&p);
-        rotXAngle(&p, iFracAng2);
+        rotX(&p, iFracAng2.x, iFracAng2.y);
         p *= iFracScale;
         p += vec4f(iFracShift, 0);
     }
@@ -162,9 +150,9 @@ fn col_fractal(point: vec4<f32>) -> vec4<f32> {
     var orbit = vec3<f32>(0.0, 0.0, 0.0);
     for (var i: u32 = 0; i < FRACTAL_ITER; i = i + 1) {
         p = vec4f(abs(p.xyz), p.w);
-        rotZAngle(&p, iFracAng1);
+        rotZ(&p, iFracAng1.x, iFracAng1.y);
         mengerFold(&p);
-        rotXAngle(&p, iFracAng2);
+        rotX(&p, iFracAng2.x, iFracAng2.y);
         p *= iFracScale;
         p += vec4f(iFracShift, 0);
         orbit = max(orbit, p.xyz * iFracCol);

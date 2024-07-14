@@ -36,29 +36,29 @@ export function Graphics(props: GameCanvasProps) {
         id={3}
         value={props.store.level.scale}
       />
-      <ScalarBinding
+      <VectorBinding
         label="iFracAng1"
         group={0}
         id={4}
         value={(() => {
           const anim = props.store.level.animation.x;
 
-          return (
+          return sinCosTanAngle(
             props.store.level.angle1 +
-            (anim && anim * Math.sin(props.store.frame * 0.015))
+              (anim && anim * Math.sin(props.store.frame * 0.015))
           );
         })()}
       />
-      <ScalarBinding
+      <VectorBinding
         label="iFracAng2"
         group={0}
         id={5}
         value={(() => {
           const anim = props.store.level.animation.y;
 
-          return (
+          return sinCosTanAngle(
             props.store.level.angle2 +
-            (anim && anim * Math.sin(props.store.frame * 0.015))
+              (anim && anim * Math.sin(props.store.frame * 0.015))
           );
         })()}
       />
@@ -112,4 +112,10 @@ export function Graphics(props: GameCanvasProps) {
       <ScalarBinding label="iExposure" group={0} id={12} value={1} />
     </>
   );
+}
+
+function sinCosTanAngle(angle: number): [number, number, number, number] {
+  const sin = Math.sin(angle);
+  const cos = Math.cos(angle);
+  return [sin, cos, sin / cos, angle];
 }
