@@ -18,6 +18,12 @@ import {
   vec,
   vecEqual,
 } from "@grinstead/ambush";
+import {
+  MatrixBinary,
+  rotateAboutX,
+  rotateAboutY,
+  scaleAxes,
+} from "./Matrix.ts";
 
 export type GameProps = {
   store: GameStore;
@@ -68,12 +74,18 @@ export function Game(props: GameProps) {
     }
 
     function moveMarble() {
+      const camLookX = untrack(() => store.level.startLookDirection);
+
+      const camera = new MatrixBinary();
+      rotateAboutY(camera, camLookX);
+
       const dMarble = vec(
         (held.has("d") ? 1 : 0) - (held.has("a") ? 1 : 0),
-        (held.has("w") ? 1 : 0) - (held.has("s") ? 1 : 0)
+        0,
+        (held.has("s") ? 1 : 0) - (held.has("w") ? 1 : 0)
       );
 
-      vMarble = addVec(vMarble, scale(dMarble, 0.01));
+      vMarble = addVec(vMarble, scale(camera.multVec(dMarble), 0.001));
 
       if (!vecEqual(vMarble, VEC_ZERO)) {
         setStore("level", "marblePosition", (prev) => addVec(prev, vMarble));
