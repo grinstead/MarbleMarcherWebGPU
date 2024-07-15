@@ -1,9 +1,7 @@
 import {
-  FrameTimer,
   ScalarBinding,
   VectorBinding,
   rgbArray,
-  useTime,
   xyzArray,
 } from "@grinstead/ambush";
 import { LevelData } from "./LevelData.ts";
@@ -11,7 +9,6 @@ import { LevelData } from "./LevelData.ts";
 export type FractalProps = Pick<
   LevelData,
   | "scale"
-  | "animation"
   | "angle1"
   | "angle2"
   | "offset"
@@ -19,13 +16,9 @@ export type FractalProps = Pick<
   | "marbleRadius"
   | "isPlanet"
   | "flagPosition"
-> & {
-  time: FrameTimer;
-};
+>;
 
 export function Fractal(props: FractalProps) {
-  const time = useTime(() => props.time);
-
   return (
     <>
       <ScalarBinding label="iFracScale" group={0} id={3} value={props.scale} />
@@ -33,40 +26,19 @@ export function Fractal(props: FractalProps) {
         label="iFracAng1"
         group={0}
         id={4}
-        value={(() => {
-          const anim = props.animation.x;
-
-          return sinCosTanAngle(
-            props.angle1 + (anim && anim * Math.sin(time() * 0.9))
-          );
-        })()}
+        value={sinCosTanAngle(props.angle1)}
       />
       <VectorBinding
         label="iFracAng2"
         group={0}
         id={5}
-        value={(() => {
-          const anim = props.animation.y;
-
-          return sinCosTanAngle(
-            props.angle2 + (anim && anim * Math.sin(time() * 0.9))
-          );
-        })()}
+        value={sinCosTanAngle(props.angle2)}
       />
       <VectorBinding
         label="iFracShift"
         group={0}
         id={6}
-        value={(() => {
-          const anim = props.animation.z;
-          const offset = xyzArray(props.offset);
-
-          if (anim) {
-            offset[1] += anim * Math.sin(time() * 0.9);
-          }
-
-          return offset;
-        })()}
+        value={xyzArray(props.offset)}
       />
       <VectorBinding
         label="iFracCol"
