@@ -1,8 +1,9 @@
 import {
-  BufferBinding,
+  FrameTimer,
   ScalarBinding,
   VectorBinding,
   rgbArray,
+  useTime,
   xyzArray,
 } from "@grinstead/ambush";
 import { LevelData } from "./LevelData.ts";
@@ -19,10 +20,12 @@ export type FractalProps = Pick<
   | "isPlanet"
   | "flagPosition"
 > & {
-  time: number;
+  time: FrameTimer;
 };
 
 export function Fractal(props: FractalProps) {
+  const time = useTime(() => props.time);
+
   return (
     <>
       <ScalarBinding label="iFracScale" group={0} id={3} value={props.scale} />
@@ -34,7 +37,7 @@ export function Fractal(props: FractalProps) {
           const anim = props.animation.x;
 
           return sinCosTanAngle(
-            props.angle1 + (anim && anim * Math.sin(props.time * 0.9))
+            props.angle1 + (anim && anim * Math.sin(time() * 0.9))
           );
         })()}
       />
@@ -46,7 +49,7 @@ export function Fractal(props: FractalProps) {
           const anim = props.animation.y;
 
           return sinCosTanAngle(
-            props.angle2 + (anim && anim * Math.sin(props.time * 0.9))
+            props.angle2 + (anim && anim * Math.sin(time() * 0.9))
           );
         })()}
       />
@@ -59,7 +62,7 @@ export function Fractal(props: FractalProps) {
           const offset = xyzArray(props.offset);
 
           if (anim) {
-            offset[1] += anim * Math.sin(props.time * 0.9);
+            offset[1] += anim * Math.sin(time() * 0.9);
           }
 
           return offset;

@@ -1,7 +1,8 @@
+import { FrameTimer } from "@grinstead/ambush";
 import { Fractal } from "./Fractal.tsx";
 import { LevelData } from "./LevelData.ts";
 
-export type LevelProps = LevelData & { time: number };
+export type LevelProps = LevelData & { time: FrameTimer };
 
 export function Level(props: LevelProps) {
   return (

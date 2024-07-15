@@ -9,16 +9,18 @@ import {
   GPULoadError,
   GPUWorkQueue,
   lerp,
+  useTime,
 } from "@grinstead/ambush";
-import { ErrorBoundary, batch, createSignal } from "solid-js";
+import { ErrorBoundary, batch, createMemo, createSignal } from "solid-js";
 import { produce } from "solid-js/store";
 import { Game } from "./Game.tsx";
 import { DebugControls } from "./DebugControls.tsx";
 
 function App() {
   const [store, setStore] = createGameStore();
-  const [fps, setFps] = createSignal(0);
-  const timer = new FrameTimer();
+
+  const time = useTime(() => store.levelTime.parent);
+  const fps = createMemo(() => (time(), store.levelTime.fps));
 
   let canvas: undefined | HTMLCanvasElement;
 
@@ -57,7 +59,7 @@ function App() {
           </GPUContainer>
         </div>
         <pre>
-          {Math.floor(store.time)} in-game seconds / {fps()} fps
+          {Math.floor(time())} in-game seconds / {fps()} fps
         </pre>
         <DebugControls store={store} setStore={setStore} />
       </ErrorBoundary>
@@ -65,7 +67,7 @@ function App() {
   );
 
   function render() {
-    timer.markFrame();
+    const timer = store.levelTime.parent;
 
     renderTimer = undefined;
     manager!.runQueued();
@@ -73,15 +75,7 @@ function App() {
     if (store.paused) {
       timer.pause();
     } else {
-      // setFps((prev) => lerp(prev, timer.fps, 0.1));
-      setFps(timer.fps);
-
-      setStore(
-        produce((state) => {
-          state.frame = timer.frame;
-          state.time = timer.time / 1000;
-        })
-      );
+      timer.markFrame();
     }
   }
 }

@@ -11,7 +11,7 @@ export type GameProps = {
 export function Game(props: GameProps) {
   return (
     <>
-      <Level {...props.store.level} time={props.store.time} />
+      <Level {...props.store.level} time={props.store.levelTime} />
       <GameUI store={props.store} setStore={props.setStore} />
     </>
   );
