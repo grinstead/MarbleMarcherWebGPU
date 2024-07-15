@@ -84,16 +84,16 @@ export function GameUI(props: GameUIProps) {
         }}
         tabIndex={1}
         onkeydown={(e) => {
-          if (e.key === "w") {
-            translate(camera, 0, 0, 1 / 32);
-            props.setStore("cameraMatrix", camera.snapshot());
-          }
+          props.store.loop.add.input({ type: "pressed", key: e.key });
+        }}
+        onkeyup={(e) => {
+          props.store.loop.add.input({ type: "released", key: e.key });
         }}
         onfocus={() => {
-          props.setStore("paused", false);
+          props.store.loop.add.input({ type: "focus" });
         }}
         onblur={() => {
-          props.setStore("paused", true);
+          props.store.loop.add.input({ type: "blur" });
         }}
         class={classnames("overlay", props.store.paused && "paused")}
       ></div>

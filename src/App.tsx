@@ -24,9 +24,6 @@ function App() {
 
   let canvas: undefined | HTMLCanvasElement;
 
-  let manager: undefined | GPUWorkQueue;
-  let renderTimer: undefined | ReturnType<typeof requestAnimationFrame>;
-
   return (
     <>
       <h1 id="logo">Marble Marcher (WebGPU)</h1>
@@ -47,12 +44,7 @@ function App() {
         <div class="game">
           <canvas ref={canvas} class="canvas" width={1280} height={720} />
           <GPUContainer canvas={canvas!}>
-            <GPUWorkQueue.Provider
-              ref={manager}
-              onHasWork={() => {
-                renderTimer ??= requestAnimationFrame(render);
-              }}
-            >
+            <GPUWorkQueue.Provider>
               <Graphics store={store} />
               <Game store={store} setStore={setStore} />
             </GPUWorkQueue.Provider>
@@ -65,19 +57,6 @@ function App() {
       </ErrorBoundary>
     </>
   );
-
-  function render() {
-    const timer = store.levelTime.parent;
-
-    renderTimer = undefined;
-    manager!.runQueued();
-
-    if (store.paused) {
-      timer.pause();
-    } else {
-      timer.markFrame();
-    }
-  }
 }
 
 export default App;
