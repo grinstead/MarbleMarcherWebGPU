@@ -26,12 +26,10 @@ export function Game(props: GameProps) {
 
   let held = new Set<string>();
 
-  const baseTimer = createMemo(() => props.store.levelTime.parent);
-
   const mainLoop = createMemo(() => {
     const { store, setStore } = props;
     const { loop } = store;
-    const timer = baseTimer();
+    const { timer } = gameloop;
 
     return renderLoopStep;
 

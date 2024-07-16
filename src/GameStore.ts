@@ -29,19 +29,13 @@ export type GameTasks = {
 export type GameStore = {
   level: LevelData;
   paused: boolean;
-  cameraMatrix: Float32Array;
-  levelTime: FrameTimer;
   loop: Docket<GameTasks, GameLoopTypes>;
 };
 
 export function createGameStore() {
-  const gameTime = new BaseFrameTimer();
-
   return createStore<GameStore>({
     level: { ...levels[0] },
     paused: true,
-    cameraMatrix: IDENTITY,
-    levelTime: gameTime.subtimer(),
     loop: new Docket<GameTasks, GameLoopTypes>({
       input: { events: ["step"] },
       render: {},

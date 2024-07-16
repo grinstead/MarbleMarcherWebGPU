@@ -28,50 +28,20 @@ export type GameUIProps = {
 export function GameUI(props: GameUIProps) {
   const [mouse, trackMouseInElement] = createMouseTracker();
 
-  const camera = new MatrixBinary();
+  // createEffect<Vec>((prevPos) => {
+  //   const pos = mouse.pos();
 
-  createRenderEffect(() => {
-    const { marblePosition, startLookDirection, marbleRadius } =
-      props.store.level;
+  //   if (!props.store.paused && mouse.buttons()) {
+  //     let diff = prevPos ? subtractVec(pos, prevPos) : VEC_ZERO;
 
-    const cameraDistance = 15;
+  //     diff = scale(diff, 1 / 320);
+  //     translate(camera, diff.x, diff.y, 0);
 
-    camera.set(IDENTITY);
-    rotateAboutX(camera, -0.3);
-    rotateAboutY(camera, startLookDirection);
+  //     props.setStore("cameraMatrix", camera.snapshot());
+  //   }
 
-    let camPos = marblePosition;
-    camPos = addVec(
-      camPos,
-      camera.multVec(vec(0, 0, marbleRadius * cameraDistance))
-    );
-
-    camPos = addVec(
-      camPos,
-      scale(camera.colY(), marbleRadius * cameraDistance * 0.1)
-    );
-
-    const mat = camera.snapshot();
-
-    mat.set(xyzArray(camPos), 12);
-
-    props.setStore("cameraMatrix", mat);
-  });
-
-  createEffect<Vec>((prevPos) => {
-    const pos = mouse.pos();
-
-    if (!props.store.paused && mouse.buttons()) {
-      let diff = prevPos ? subtractVec(pos, prevPos) : VEC_ZERO;
-
-      diff = scale(diff, 1 / 320);
-      translate(camera, diff.x, diff.y, 0);
-
-      props.setStore("cameraMatrix", camera.snapshot());
-    }
-
-    return pos;
-  });
+  //   return pos;
+  // });
 
   return (
     <>
