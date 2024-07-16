@@ -33,15 +33,21 @@ export type LevelProps = {
 export function Level(props: LevelProps) {
   const time = useTime(() => props.timer);
 
-  const [pMarble, setPMarble] = createSignal({
-    ...unwrap(props.level.marblePosition),
+  const start = props.level.marblePosition;
+  const [pMarble, setPMarble] = createSignal(vec(start.x, start.y, start.z), {
+    equals: vecEqual,
   });
 
-  const nearest = nearestPoint(props.level, pMarble());
-  console.log({
-    marble: pMarble(),
-    nearest,
-    distance: magnitude(subtractVec(pMarble(), nearest)),
+  const shape = createMemo(() => {
+    const { level } = props;
+    const { animation, offset } = level;
+
+    return {
+      scale: level.scale,
+      angle1: animate(level.angle1, animation.x, time),
+      angle2: animate(level.angle2, animation.y, time),
+      offset: vec(offset.x, animate(offset.y, animation.z, time), offset.z),
+    };
   });
 
   const runStep = createMemo(() => {
@@ -59,7 +65,7 @@ export function Level(props: LevelProps) {
     }
 
     function collision() {
-      const nearest = nearestPoint(props.level, p);
+      const nearest = nearestPoint(shape(), p);
       const delta = subtractVec(nearest, p);
       const distance = magnitude(delta);
 
@@ -86,25 +92,18 @@ export function Level(props: LevelProps) {
         (heldKeys.has("s") ? 1 : 0) - (heldKeys.has("w") ? 1 : 0)
       );
 
-      v = addVec(v, scale(camera.multVec(dMarble), 0.01 * timer.deltaTime));
+      v = addVec(v, scale(camera.multVec(dMarble), 0.01));
 
-      if (!vecEqual(v, VEC_ZERO)) {
-        setPMarble(addVec(p, v));
-      }
+      p = addVec(p, scale(v, timer.deltaTime));
+
+      setPMarble(p);
     }
   });
 
   return (
     <>
       <Fractal
-        scale={props.level.scale}
-        angle1={animate(props.level.angle1, props.level.animation.x, time)}
-        angle2={animate(props.level.angle2, props.level.animation.y, time)}
-        offset={vec(
-          props.level.offset.x,
-          animate(props.level.offset.y, props.level.animation.z, time),
-          props.level.offset.z
-        )}
+        {...shape()}
         color={props.level.color}
         marbleRadius={props.level.marbleRadius}
         isPlanet={props.level.isPlanet}

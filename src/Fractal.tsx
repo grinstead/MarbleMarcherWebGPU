@@ -8,17 +8,8 @@ import {
 } from "@grinstead/ambush";
 import { FractalShape, LevelData } from "./LevelData.ts";
 
-export type FractalProps = Pick<
-  LevelData,
-  | "scale"
-  | "angle1"
-  | "angle2"
-  | "offset"
-  | "color"
-  | "marbleRadius"
-  | "isPlanet"
-  | "flagPosition"
->;
+export type FractalProps = FractalShape &
+  Pick<LevelData, "color" | "marbleRadius" | "isPlanet" | "flagPosition">;
 
 export function Fractal(props: FractalProps) {
   return (
