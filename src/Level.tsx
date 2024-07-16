@@ -6,6 +6,7 @@ import {
   Vec,
   VectorBinding,
   addVec,
+  dot,
   magnitude,
   normalize,
   scale,
@@ -21,6 +22,8 @@ import { Accessor, createMemo, createSignal, useContext } from "solid-js";
 import { MatrixBinary, rotateAboutY } from "./Matrix.ts";
 import { unwrap } from "solid-js/store";
 
+const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
+
 export type LevelProps = {
   level: LevelData;
   timer: FrameTimer;
@@ -30,9 +33,9 @@ export type LevelProps = {
 export function Level(props: LevelProps) {
   const time = useTime(() => props.timer);
 
-  const [pMarble, setPMarble] = createSignal(
-    unwrap(props.level.marblePosition)
-  );
+  const [pMarble, setPMarble] = createSignal({
+    ...unwrap(props.level.marblePosition),
+  });
 
   const nearest = nearestPoint(props.level, pMarble());
   console.log({
@@ -44,12 +47,33 @@ export function Level(props: LevelProps) {
   const runStep = createMemo(() => {
     const { heldKeys, timer } = props;
     const { startLookDirection } = props.level;
-    let vMarble = VEC_ZERO;
+    let v = VEC_ZERO;
+    let p = VEC_ZERO;
 
     return step;
 
     function step() {
+      p = pMarble();
+      collision();
       moveMarble();
+    }
+
+    function collision() {
+      const nearest = nearestPoint(props.level, p);
+      const delta = subtractVec(nearest, p);
+      const distance = magnitude(delta);
+
+      const { marbleRadius } = props.level;
+      if (distance > marbleRadius) {
+        // no collision
+        return;
+      }
+
+      const direction = scale(delta, 1 / distance);
+
+      let dv = dot(v, direction);
+      p = subtractVec(p, subtractVec(scale(direction, marbleRadius), delta));
+      v = subtractVec(v, scale(direction, dv * MARBLE_BOUNCE));
     }
 
     function moveMarble() {
@@ -62,13 +86,10 @@ export function Level(props: LevelProps) {
         (heldKeys.has("s") ? 1 : 0) - (heldKeys.has("w") ? 1 : 0)
       );
 
-      vMarble = addVec(
-        vMarble,
-        scale(camera.multVec(dMarble), 0.01 * timer.deltaTime)
-      );
+      v = addVec(v, scale(camera.multVec(dMarble), 0.01 * timer.deltaTime));
 
-      if (!vecEqual(vMarble, VEC_ZERO)) {
-        setPMarble((prev) => addVec(prev, vMarble));
+      if (!vecEqual(v, VEC_ZERO)) {
+        setPMarble(addVec(p, v));
       }
     }
   });
