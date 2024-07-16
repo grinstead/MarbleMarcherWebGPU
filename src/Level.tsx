@@ -3,18 +3,23 @@ import {
   GameLoop,
   GameLoopContext,
   VEC_ZERO,
+  Vec,
   VectorBinding,
   addVec,
+  magnitude,
+  normalize,
   scale,
+  subtractVec,
   useTime,
   vec,
   vecEqual,
   xyzArray,
 } from "@grinstead/ambush";
-import { Fractal } from "./Fractal.tsx";
-import { LevelData } from "./LevelData.ts";
+import { Fractal, nearestPoint } from "./Fractal.tsx";
+import { FractalShape, LevelData } from "./LevelData.ts";
 import { Accessor, createMemo, createSignal, useContext } from "solid-js";
 import { MatrixBinary, rotateAboutY } from "./Matrix.ts";
+import { unwrap } from "solid-js/store";
 
 export type LevelProps = {
   level: LevelData;
@@ -25,7 +30,16 @@ export type LevelProps = {
 export function Level(props: LevelProps) {
   const time = useTime(() => props.timer);
 
-  const [pMarble, setPMarble] = createSignal(props.level.marblePosition);
+  const [pMarble, setPMarble] = createSignal(
+    unwrap(props.level.marblePosition)
+  );
+
+  const nearest = nearestPoint(props.level, pMarble());
+  console.log({
+    marble: pMarble(),
+    nearest,
+    distance: magnitude(subtractVec(pMarble(), nearest)),
+  });
 
   const runStep = createMemo(() => {
     const { heldKeys, timer } = props;

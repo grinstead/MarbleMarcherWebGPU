@@ -1,10 +1,13 @@
 import { RGB, VEC_ZERO, Vec, rgb, vec } from "@grinstead/ambush";
 
-export type LevelData = {
+export type FractalShape = {
   scale: number;
   angle1: number;
   angle2: number;
   offset: Vec;
+};
+
+export type LevelData = FractalShape & {
   color: RGB;
   marbleRadius: number;
   startLookDirection: number;
