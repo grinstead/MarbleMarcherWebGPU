@@ -40,6 +40,8 @@ const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
 const GRAVITY = 18;
 const GROUND_FORCE = 28.8;
 const AIR_FORCE = 14.4;
+const GROUND_FRICTION = 0.99;
+const AIR_FRICTION = 0.995;
 
 const GROUND_RATIO = 1.15;
 
@@ -95,6 +97,9 @@ export function Level(props: LevelProps) {
       // add the velocity the user is inputing, but it will
       // only apply next frame
       addUserInput(onGround);
+
+      // apply some cheap friction
+      v = scale(v, onGround ? GROUND_FRICTION : AIR_FRICTION);
 
       setPMarble(p);
     }
