@@ -23,6 +23,7 @@ import { MatrixBinary, rotateAboutY } from "./Matrix.ts";
 import { unwrap } from "solid-js/store";
 
 const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
+const GRAVITY = 1.8; // original repo gravity * 60fps
 
 export type LevelProps = {
   level: LevelData;
@@ -52,7 +53,7 @@ export function Level(props: LevelProps) {
 
   const runStep = createMemo(() => {
     const { heldKeys, timer } = props;
-    const { startLookDirection } = props.level;
+    const { startLookDirection, marbleRadius } = props.level;
     let v = VEC_ZERO;
     let p = VEC_ZERO;
 
@@ -60,8 +61,14 @@ export function Level(props: LevelProps) {
 
     function step() {
       p = pMarble();
+      gravity();
       collision();
       moveMarble();
+    }
+
+    function gravity() {
+      let f = marbleRadius * GRAVITY;
+      v = addVec(v, vec(0, -f * timer.deltaTime, 0));
     }
 
     function collision() {
@@ -69,7 +76,6 @@ export function Level(props: LevelProps) {
       const delta = subtractVec(nearest, p);
       const distance = magnitude(delta);
 
-      const { marbleRadius } = props.level;
       if (distance > marbleRadius) {
         // no collision
         return;
