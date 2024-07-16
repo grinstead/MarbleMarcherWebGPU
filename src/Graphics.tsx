@@ -23,12 +23,6 @@ export function Graphics(props: GameCanvasProps) {
         fragmentMain="main"
         draw={4}
       />
-      <BufferBinding
-        label="iMat"
-        group={0}
-        id={0}
-        value={props.store.cameraMatrix}
-      />
       <VectorBinding label="iResolution" group={0} id={1} value={[1280, 720]} />
       <ScalarBinding label="iExposure" group={0} id={12} value={1} />
     </>

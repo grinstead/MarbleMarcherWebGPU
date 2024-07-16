@@ -1,4 +1,5 @@
 import {
+  BufferBinding,
   FrameTimer,
   GameLoop,
   GameLoopContext,
@@ -18,8 +19,19 @@ import {
 } from "@grinstead/ambush";
 import { Fractal, nearestPoint } from "./Fractal.tsx";
 import { FractalShape, LevelData } from "./LevelData.ts";
-import { Accessor, createMemo, createSignal, useContext } from "solid-js";
-import { MatrixBinary, rotateAboutY } from "./Matrix.ts";
+import {
+  Accessor,
+  createMemo,
+  createRenderEffect,
+  createSignal,
+  useContext,
+} from "solid-js";
+import {
+  IDENTITY,
+  MatrixBinary,
+  rotateAboutX,
+  rotateAboutY,
+} from "./Matrix.ts";
 import { unwrap } from "solid-js/store";
 
 const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
@@ -135,6 +147,35 @@ export function Level(props: LevelProps) {
     }
   });
 
+  const camera = new MatrixBinary();
+
+  const cameraMatrix = createMemo(() => {
+    const { startLookDirection, marbleRadius } = props.level;
+
+    const cameraDistance = 15;
+
+    camera.set(IDENTITY);
+    rotateAboutX(camera, -0.3);
+    rotateAboutY(camera, startLookDirection);
+
+    let camPos = pMarble();
+    camPos = addVec(
+      camPos,
+      camera.multVec(vec(0, 0, marbleRadius * cameraDistance))
+    );
+
+    camPos = addVec(
+      camPos,
+      scale(camera.colY(), marbleRadius * cameraDistance * 0.1)
+    );
+
+    const mat = camera.snapshot();
+
+    mat.set(xyzArray(camPos), 12);
+
+    return mat;
+  });
+
   return (
     <>
       <Fractal
@@ -151,6 +192,7 @@ export function Level(props: LevelProps) {
         id={8}
         value={xyzArray(pMarble())}
       />
+      <BufferBinding label="iMat" group={0} id={0} value={cameraMatrix()} />
     </>
   );
 }
