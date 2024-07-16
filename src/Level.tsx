@@ -11,7 +11,6 @@ export function Level(props: LevelProps) {
   return (
     <Fractal
       scale={props.scale}
-      animation={props.animation}
       angle1={animate(props.angle1, props.animation.x, time)}
       angle2={animate(props.angle2, props.animation.y, time)}
       offset={vec(
