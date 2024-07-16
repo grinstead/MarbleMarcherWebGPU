@@ -33,8 +33,6 @@ export function Game(props: GameProps) {
     const { loop } = store;
     const timer = baseTimer();
 
-    let vMarble = VEC_ZERO;
-
     return renderLoopStep;
 
     function handleInput(e: KeyboardTask) {

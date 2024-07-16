@@ -23,7 +23,15 @@ import { MatrixBinary, rotateAboutY } from "./Matrix.ts";
 import { unwrap } from "solid-js/store";
 
 const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
-const GRAVITY = 1.8; // original repo gravity * 60fps
+
+// forces are the original repos * 60fps * 60fps
+const GRAVITY = 18;
+const GROUND_FORCE = 28.8;
+const AIR_FORCE = 14.4;
+
+const GROUND_RATIO = 1.15;
+
+const NUM_PHYSICS_STEPS = 6;
 
 export type LevelProps = {
   level: LevelData;
@@ -56,29 +64,46 @@ export function Level(props: LevelProps) {
     const { startLookDirection, marbleRadius } = props.level;
     let v = VEC_ZERO;
     let p = VEC_ZERO;
+    let deltaTime = 0;
 
     return step;
 
     function step() {
+      deltaTime = timer.deltaTime;
+      if (!deltaTime) return;
+
+      let onGround = false;
       p = pMarble();
-      gravity();
-      collision();
-      moveMarble();
+      for (let i = 0; i < NUM_PHYSICS_STEPS; i++) {
+        gravity();
+        onGround = collision() || onGround;
+        p = addVec(p, scale(v, deltaTime / NUM_PHYSICS_STEPS));
+      }
+
+      // add the velocity the user is inputing, but it will
+      // only apply next frame
+      addUserInput(onGround);
+
+      setPMarble(p);
     }
 
     function gravity() {
-      let f = marbleRadius * GRAVITY;
-      v = addVec(v, vec(0, -f * timer.deltaTime, 0));
+      let f = marbleRadius * (GRAVITY / NUM_PHYSICS_STEPS);
+      v = addVec(v, vec(0, -f * deltaTime, 0));
     }
 
-    function collision() {
+    /**
+     * Computes collision with the fractal
+     * @returns whether the fractal is "on the ground"
+     */
+    function collision(): boolean {
       const nearest = nearestPoint(shape(), p);
       const delta = subtractVec(nearest, p);
       const distance = magnitude(delta);
 
       if (distance > marbleRadius) {
         // no collision
-        return;
+        return distance < marbleRadius * GROUND_RATIO;
       }
 
       const direction = scale(delta, 1 / distance);
@@ -86,9 +111,11 @@ export function Level(props: LevelProps) {
       let dv = dot(v, direction);
       p = subtractVec(p, subtractVec(scale(direction, marbleRadius), delta));
       v = subtractVec(v, scale(direction, dv * MARBLE_BOUNCE));
+
+      return true;
     }
 
-    function moveMarble() {
+    function addUserInput(onGround: boolean) {
       const camera = new MatrixBinary();
       rotateAboutY(camera, startLookDirection);
 
@@ -98,11 +125,13 @@ export function Level(props: LevelProps) {
         (heldKeys.has("s") ? 1 : 0) - (heldKeys.has("w") ? 1 : 0)
       );
 
-      v = addVec(v, scale(camera.multVec(dMarble), 0.01));
-
-      p = addVec(p, scale(v, timer.deltaTime));
-
-      setPMarble(p);
+      v = addVec(
+        v,
+        scale(
+          camera.multVec(dMarble),
+          (onGround ? GROUND_FORCE : AIR_FORCE) * marbleRadius * deltaTime
+        )
+      );
     }
   });
 
