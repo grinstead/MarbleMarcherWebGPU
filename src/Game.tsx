@@ -1,29 +1,18 @@
 import { SetStoreFunction } from "solid-js/store";
-import { GameStore, GameTasks, KeyboardTask } from "./GameStore.ts";
+import { GameStore, KeyboardTask } from "./GameStore.ts";
 import { GameUI } from "./GameUI.tsx";
 import { Level } from "./Level.tsx";
-import {
-  batch,
-  createEffect,
-  createMemo,
-  onCleanup,
-  untrack,
-  useContext,
-} from "solid-js";
+import { createMemo, untrack, useContext } from "solid-js";
 import {
   GPUWorkQueueContext,
+  GameLoop,
   VEC_ZERO,
   addVec,
   scale,
   vec,
   vecEqual,
 } from "@grinstead/ambush";
-import {
-  MatrixBinary,
-  rotateAboutX,
-  rotateAboutY,
-  scaleAxes,
-} from "./Matrix.ts";
+import { MatrixBinary, rotateAboutY } from "./Matrix.ts";
 
 export type GameProps = {
   store: GameStore;
@@ -35,23 +24,16 @@ export function Game(props: GameProps) {
 
   let held = new Set<string>();
 
-  let nextRenderLoop: undefined | ReturnType<typeof requestAnimationFrame>;
-
   const baseTimer = createMemo(() => props.store.levelTime.parent);
 
-  createEffect(() => {
-    console.log("New Loop", nextRenderLoop != null);
-    if (nextRenderLoop != null) {
-      cancelAnimationFrame(nextRenderLoop);
-    }
-
+  const mainLoop = createMemo(() => {
     const { store, setStore } = props;
     const { loop } = store;
     const timer = baseTimer();
 
     let vMarble = VEC_ZERO;
 
-    renderLoopStep();
+    return renderLoopStep;
 
     function handleInput(e: KeyboardTask) {
       switch (e.type) {
@@ -112,24 +94,12 @@ export function Game(props: GameProps) {
     }
 
     function renderLoopStep() {
-      timer.markFrame();
       runEvents();
       moveMarble();
-
-      if (graphics.hasWork) graphics.runQueued();
 
       if (untrack(() => store.paused)) {
         timer.pause();
       }
-
-      nextRenderLoop = requestAnimationFrame(renderLoopStep);
-    }
-  });
-
-  onCleanup(() => {
-    if (nextRenderLoop != null) {
-      console.log("loop cancelled");
-      cancelAnimationFrame(nextRenderLoop);
     }
   });
 
@@ -137,6 +107,14 @@ export function Game(props: GameProps) {
     <>
       <Level {...props.store.level} time={props.store.levelTime} />
       <GameUI store={props.store} setStore={props.setStore} />
+      <GameLoop.Part step="main" work={mainLoop()} />
+      <GameLoop.Part
+        passive
+        step="render"
+        work={() => {
+          graphics.hasWork && graphics.runQueued();
+        }}
+      />
     </>
   );
 }

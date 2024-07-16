@@ -8,6 +8,7 @@ import {
   GPUContainer,
   GPULoadError,
   GPUWorkQueue,
+  GameLoop,
   lerp,
   useTime,
 } from "@grinstead/ambush";
@@ -44,10 +45,15 @@ function App() {
         <div class="game">
           <canvas ref={canvas} class="canvas" width={1280} height={720} />
           <GPUContainer canvas={canvas!}>
-            <GPUWorkQueue.Provider>
-              <Graphics store={store} />
-              <Game store={store} setStore={setStore} />
-            </GPUWorkQueue.Provider>
+            <GameLoop.Provider
+              steps={["main", "render"]}
+              timer={store.levelTime.parent}
+            >
+              <GPUWorkQueue.Provider>
+                <Graphics store={store} />
+                <Game store={store} setStore={setStore} />
+              </GPUWorkQueue.Provider>
+            </GameLoop.Provider>
           </GPUContainer>
         </div>
         <pre>
