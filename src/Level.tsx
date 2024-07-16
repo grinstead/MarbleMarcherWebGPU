@@ -1,28 +1,30 @@
-import { FrameTimer, useTime, vec } from "@grinstead/ambush";
+import { FrameTimer, GameLoopContext, useTime, vec } from "@grinstead/ambush";
 import { Fractal } from "./Fractal.tsx";
 import { LevelData } from "./LevelData.ts";
-import { Accessor } from "solid-js";
+import { Accessor, useContext } from "solid-js";
 
-export type LevelProps = LevelData & { time: FrameTimer };
+export type LevelProps = { level: LevelData; timer: FrameTimer };
 
 export function Level(props: LevelProps) {
-  const time = useTime(() => props.time);
+  const time = useTime(() => props.timer);
 
   return (
-    <Fractal
-      scale={props.scale}
-      angle1={animate(props.angle1, props.animation.x, time)}
-      angle2={animate(props.angle2, props.animation.y, time)}
-      offset={vec(
-        props.offset.x,
-        animate(props.offset.y, props.animation.z, time),
-        props.offset.z
-      )}
-      color={props.color}
-      marbleRadius={props.marbleRadius}
-      isPlanet={props.isPlanet}
-      flagPosition={props.flagPosition}
-    />
+    <>
+      <Fractal
+        scale={props.level.scale}
+        angle1={animate(props.level.angle1, props.level.animation.x, time)}
+        angle2={animate(props.level.angle2, props.level.animation.y, time)}
+        offset={vec(
+          props.level.offset.x,
+          animate(props.level.offset.y, props.level.animation.z, time),
+          props.level.offset.z
+        )}
+        color={props.level.color}
+        marbleRadius={props.level.marbleRadius}
+        isPlanet={props.level.isPlanet}
+        flagPosition={props.level.flagPosition}
+      />
+    </>
   );
 }
 
