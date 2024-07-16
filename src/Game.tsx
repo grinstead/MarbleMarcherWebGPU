@@ -57,25 +57,6 @@ export function Game(props: GameProps) {
       }
     }
 
-    function moveMarble() {
-      const camLookX = untrack(() => store.level.startLookDirection);
-
-      const camera = new MatrixBinary();
-      rotateAboutY(camera, camLookX);
-
-      const dMarble = vec(
-        (held.has("d") ? 1 : 0) - (held.has("a") ? 1 : 0),
-        0,
-        (held.has("s") ? 1 : 0) - (held.has("w") ? 1 : 0)
-      );
-
-      vMarble = addVec(vMarble, scale(camera.multVec(dMarble), 0.001));
-
-      if (!vecEqual(vMarble, VEC_ZERO)) {
-        setStore("level", "marblePosition", (prev) => addVec(prev, vMarble));
-      }
-    }
-
     function runEvents() {
       let task = loop.next();
 
@@ -97,7 +78,6 @@ export function Game(props: GameProps) {
 
     function renderLoopStep() {
       runEvents();
-      moveMarble();
 
       if (untrack(() => store.paused)) {
         timer.pause();
@@ -113,11 +93,13 @@ export function Game(props: GameProps) {
 
   return (
     <>
-      <Show keyed when={levelTime()}>
-        {(timer) => <Level level={props.store.level} timer={timer} />}
-      </Show>
-      <GameUI store={props.store} setStore={props.setStore} />
       <GameLoop.Part step="main" work={mainLoop()} />
+      <GameUI store={props.store} setStore={props.setStore} />
+      <Show keyed when={levelTime()}>
+        {(timer) => (
+          <Level level={props.store.level} timer={timer} heldKeys={held} />
+        )}
+      </Show>
       <GameLoop.Part
         passive
         step="render"

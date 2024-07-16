@@ -30,12 +30,6 @@ export function Graphics(props: GameCanvasProps) {
         value={props.store.cameraMatrix}
       />
       <VectorBinding label="iResolution" group={0} id={1} value={[1280, 720]} />
-      <VectorBinding
-        label="iMarblePos"
-        group={0}
-        id={8}
-        value={xyzArray(props.store.level.marblePosition)}
-      />
       <ScalarBinding label="iExposure" group={0} id={12} value={1} />
     </>
   );
