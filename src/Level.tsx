@@ -9,6 +9,7 @@ import {
   addVec,
   dot,
   magnitude,
+  maybeNewVec,
   normalize,
   scale,
   subtractVec,
@@ -21,6 +22,7 @@ import { Fractal, nearestPoint } from "./Fractal.tsx";
 import { FractalShape, LevelData } from "./LevelData.ts";
 import {
   Accessor,
+  createComputed,
   createMemo,
   createRenderEffect,
   createSignal,
@@ -50,6 +52,7 @@ const NUM_PHYSICS_STEPS = 6;
 export type LevelProps = {
   level: LevelData;
   timer: FrameTimer;
+  mouse: Vec;
   heldKeys: Set<string>;
 };
 
@@ -59,6 +62,21 @@ export function Level(props: LevelProps) {
   const start = props.level.marblePosition;
   const [pMarble, setPMarble] = createSignal(vec(start.x, start.y, start.z), {
     equals: vecEqual,
+  });
+
+  const [cameraData, setCameraData] = createSignal(VEC_ZERO, {
+    equals: vecEqual,
+  });
+
+  let mouse = VEC_ZERO;
+  createComputed<Vec>((prev) => {
+    const m = props.mouse;
+
+    if (prev) {
+      mouse = addVec(mouse, scale(subtractVec(m, prev), 1 / 320));
+    }
+
+    return m;
   });
 
   const shape = createMemo(() => {
@@ -79,10 +97,17 @@ export function Level(props: LevelProps) {
     let v = VEC_ZERO;
     let p = VEC_ZERO;
     let deltaTime = 0;
+    let prevMouse = mouse;
+    let camera = vec(startLookDirection, -0.3, 15);
+    setCameraData(camera);
+
+    updateCamera();
 
     return step;
 
     function step() {
+      updateCamera();
+
       deltaTime = timer.deltaTime;
       if (!deltaTime) return;
 
@@ -102,6 +127,22 @@ export function Level(props: LevelProps) {
       v = scale(v, onGround ? GROUND_FRICTION : AIR_FRICTION);
 
       setPMarble(p);
+    }
+
+    function updateCamera() {
+      if (vecEqual(mouse, prevMouse)) return;
+
+      const diff = subtractVec(mouse, prevMouse);
+      prevMouse = mouse;
+
+      let { x, y } = subtractVec(camera, diff);
+      while (x > Math.PI) x -= 2 * Math.PI;
+      while (x < Math.PI) x += 2 * Math.PI;
+
+      y = Math.min(Math.max(y, -Math.PI / 2), Math.PI / 2);
+
+      camera = vec(x, y, camera.z);
+      setCameraData(camera);
     }
 
     function gravity() {
@@ -133,8 +174,8 @@ export function Level(props: LevelProps) {
     }
 
     function addUserInput(onGround: boolean) {
-      const camera = new MatrixBinary();
-      rotateAboutY(camera, startLookDirection);
+      const cameraMatrix = new MatrixBinary();
+      rotateAboutY(cameraMatrix, camera.x);
 
       const dMarble = vec(
         (heldKeys.has("d") ? 1 : 0) - (heldKeys.has("a") ? 1 : 0),
@@ -145,7 +186,7 @@ export function Level(props: LevelProps) {
       v = addVec(
         v,
         scale(
-          camera.multVec(dMarble),
+          cameraMatrix.multVec(dMarble),
           (onGround ? GROUND_FORCE : AIR_FORCE) * marbleRadius * deltaTime
         )
       );
@@ -155,24 +196,18 @@ export function Level(props: LevelProps) {
   const camera = new MatrixBinary();
 
   const cameraMatrix = createMemo(() => {
-    const { startLookDirection, marbleRadius } = props.level;
+    const { marbleRadius } = props.level;
 
-    const cameraDistance = 15;
+    const { x, y, z } = cameraData();
 
     camera.set(IDENTITY);
-    rotateAboutX(camera, -0.3);
-    rotateAboutY(camera, startLookDirection);
+    rotateAboutX(camera, y);
+    rotateAboutY(camera, x);
 
     let camPos = pMarble();
-    camPos = addVec(
-      camPos,
-      camera.multVec(vec(0, 0, marbleRadius * cameraDistance))
-    );
+    camPos = addVec(camPos, camera.multVec(vec(0, 0, marbleRadius * z)));
 
-    camPos = addVec(
-      camPos,
-      scale(camera.colY(), marbleRadius * cameraDistance * 0.1)
-    );
+    camPos = addVec(camPos, scale(camera.colY(), marbleRadius * z * 0.1));
 
     const mat = camera.snapshot();
 
