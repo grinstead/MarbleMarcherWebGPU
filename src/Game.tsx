@@ -86,17 +86,18 @@ export function Game(props: GameProps) {
   return (
     <>
       <GameLoop.Part step="main" work={mainLoop()} />
-      <GameUI store={props.store} />
-      <Show keyed when={levelTime()}>
-        {(timer) => (
-          <Level
-            level={props.store.level}
-            timer={timer}
-            heldKeys={held}
-            mouse={props.mouse}
-          />
-        )}
-      </Show>
+      <GameUI store={props.store}>
+        <Show keyed when={levelTime()}>
+          {(timer) => (
+            <Level
+              level={props.store.level}
+              timer={timer}
+              heldKeys={held}
+              mouse={props.mouse}
+            />
+          )}
+        </Show>
+      </GameUI>
       <GameLoop.Part
         passive
         step="render"
