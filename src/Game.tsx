@@ -2,16 +2,8 @@ import { SetStoreFunction } from "solid-js/store";
 import { GameStore, KeyboardTask } from "./GameStore.ts";
 import { GameUI } from "./GameUI.tsx";
 import { Level } from "./Level.tsx";
+import { Show, createMemo, untrack, useContext } from "solid-js";
 import {
-  Show,
-  createMemo,
-  createRenderEffect,
-  createSignal,
-  untrack,
-  useContext,
-} from "solid-js";
-import {
-  FrameTimer,
   GPUWorkQueueContext,
   GameLoop,
   GameLoopContext,

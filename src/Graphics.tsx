@@ -1,10 +1,7 @@
 import {
-  BufferBinding,
   RenderPipeline,
   ScalarBinding,
   VectorBinding,
-  rgbArray,
-  xyzArray,
 } from "@grinstead/ambush";
 import { GameStore } from "./GameStore.ts";
 import { frag } from "./frag.ts";
@@ -13,7 +10,7 @@ export type GameCanvasProps = {
   store: GameStore;
 };
 
-export function Graphics(props: GameCanvasProps) {
+export function Graphics() {
   return (
     <>
       <RenderPipeline

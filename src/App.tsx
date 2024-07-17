@@ -11,7 +11,7 @@ import {
   createMouseTracker,
   useTime,
 } from "@grinstead/ambush";
-import { ErrorBoundary, createEffect, createMemo } from "solid-js";
+import { ErrorBoundary, createMemo } from "solid-js";
 import { Game } from "./Game.tsx";
 import { DebugControls } from "./DebugControls.tsx";
 
@@ -48,7 +48,7 @@ function App() {
           <GPUContainer canvas={canvas!}>
             <GameLoop.Provider steps={["main", "render"]} timer={timer}>
               <GPUWorkQueue.Provider>
-                <Graphics store={store} />
+                <Graphics />
                 <Game mouse={mouse} store={store} setStore={setStore} />
               </GPUWorkQueue.Provider>
             </GameLoop.Provider>

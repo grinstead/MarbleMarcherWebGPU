@@ -1,7 +1,6 @@
 import { createStore } from "solid-js/store";
 import { LevelData, levels } from "./LevelData.ts";
-import { IDENTITY } from "./Matrix.ts";
-import { BaseFrameTimer, Docket, FrameTimer } from "@grinstead/ambush";
+import { Docket } from "@grinstead/ambush";
 
 export type GameLoopTypes = "step";
 

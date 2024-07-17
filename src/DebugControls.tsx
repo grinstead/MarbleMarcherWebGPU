@@ -19,7 +19,6 @@ export function DebugControls(props: DebugControlsProps) {
         const level = levels.find((l) => l.title === value);
         console.log("setting level", level);
         props.setStore("level", level!);
-        props.setStore("levelTime", props.store.levelTime.subtimer());
       }}
     >
       <For each={levels}>
