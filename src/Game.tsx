@@ -2,8 +2,16 @@ import { SetStoreFunction } from "solid-js/store";
 import { GameStore, KeyboardTask } from "./GameStore.ts";
 import { GameUI } from "./GameUI.tsx";
 import { Level } from "./Level.tsx";
-import { Show, createMemo, untrack, useContext } from "solid-js";
 import {
+  Show,
+  createMemo,
+  createRenderEffect,
+  createSignal,
+  untrack,
+  useContext,
+} from "solid-js";
+import {
+  FrameTimer,
   GPUWorkQueueContext,
   GameLoop,
   GameLoopContext,
@@ -77,25 +85,16 @@ export function Game(props: GameProps) {
     }
   });
 
-  const levelTime = createMemo(() => {
-    // compels us to recreate the level time every time the level data changes
-    JSON.stringify(props.store.level);
-    return gameloop.timer.subtimer();
-  });
-
   return (
     <>
       <GameLoop.Part step="main" work={mainLoop()} />
       <GameUI store={props.store}>
-        <Show keyed when={levelTime()}>
-          {(timer) => (
-            <Level
-              level={props.store.level}
-              timer={timer}
-              heldKeys={held}
-              mouse={props.mouse}
-            />
-          )}
+        <Show keyed when={JSON.stringify(props.store.level)}>
+          <Level
+            level={props.store.level}
+            heldKeys={held}
+            mouse={props.mouse}
+          />
         </Show>
       </GameUI>
       <GameLoop.Part

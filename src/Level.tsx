@@ -1,6 +1,7 @@
 import {
   FrameTimer,
   GameLoop,
+  GameLoopContext,
   MouseAccessors,
   VEC_ZERO,
   Vec,
@@ -21,10 +22,12 @@ import {
   Accessor,
   Match,
   Setter,
+  Show,
   Switch,
   createComputed,
   createMemo,
   createSignal,
+  useContext,
 } from "solid-js";
 import { MatrixBinary, rotateAboutY } from "./Matrix.ts";
 import { MarbleCamera } from "./Camera.tsx";
@@ -44,12 +47,38 @@ const NUM_PHYSICS_STEPS = 6;
 
 export type LevelProps = {
   level: LevelData;
-  timer: FrameTimer;
   mouse: MouseAccessors;
   heldKeys: Set<string>;
 };
 
-export function Level(props: LevelProps) {
+function LevelWrapper(props: LevelProps) {
+  const gameloop = useContext(GameLoopContext)!;
+
+  const [timer, setTimer] = createSignal(gameloop.timer.subtimer());
+
+  return (
+    <Show keyed when={timer()}>
+      {(timer) => (
+        <Level
+          {...props}
+          timer={timer}
+          onReset={() => {
+            setTimer(gameloop.timer.subtimer());
+          }}
+        />
+      )}
+    </Show>
+  );
+}
+
+export { LevelWrapper as Level };
+
+export type InternalLevelProps = {
+  timer: FrameTimer;
+  onReset: () => void;
+} & LevelProps;
+
+function Level(props: InternalLevelProps) {
   const time = useTime(() => props.timer);
 
   const start = props.level.marblePosition;
@@ -74,10 +103,12 @@ export function Level(props: LevelProps) {
         </Match>
         <Match when={true}>
           <LevelGameplay
-            {...props}
+            heldKeys={props.heldKeys}
+            level={props.level}
             marble={marble()}
             setMarble={setMarble}
             cameraOffset={cameraOffset()}
+            onReset={props.onReset}
             timer={props.timer.subtimer()}
           />
         </Match>
@@ -108,6 +139,7 @@ type LevelGameplayProps = {
   setMarble: Setter<Vec>;
   cameraOffset: Vec;
   heldKeys: Set<string>;
+  onReset: () => void;
 };
 
 function LevelGameplay(props: LevelGameplayProps) {
@@ -135,6 +167,11 @@ function LevelGameplay(props: LevelGameplayProps) {
     return step;
 
     function step() {
+      if (heldKeys.has("r")) {
+        props.onReset();
+        return;
+      }
+
       deltaTime = timer.deltaTime;
       if (!deltaTime) return;
 
