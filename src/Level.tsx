@@ -2,15 +2,13 @@ import {
   BufferBinding,
   FrameTimer,
   GameLoop,
-  GameLoopContext,
+  MouseAccessors,
   VEC_ZERO,
   Vec,
   VectorBinding,
   addVec,
   dot,
   magnitude,
-  maybeNewVec,
-  normalize,
   scale,
   subtractVec,
   useTime,
@@ -19,22 +17,14 @@ import {
   xyzArray,
 } from "@grinstead/ambush";
 import { Fractal, nearestPoint } from "./Fractal.tsx";
-import { FractalShape, LevelData } from "./LevelData.ts";
-import {
-  Accessor,
-  createComputed,
-  createMemo,
-  createRenderEffect,
-  createSignal,
-  useContext,
-} from "solid-js";
+import { LevelData } from "./LevelData.ts";
+import { Accessor, createComputed, createMemo, createSignal } from "solid-js";
 import {
   IDENTITY,
   MatrixBinary,
   rotateAboutX,
   rotateAboutY,
 } from "./Matrix.ts";
-import { unwrap } from "solid-js/store";
 
 const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
 
@@ -52,7 +42,7 @@ const NUM_PHYSICS_STEPS = 6;
 export type LevelProps = {
   level: LevelData;
   timer: FrameTimer;
-  mouse: Vec;
+  mouse: MouseAccessors;
   heldKeys: Set<string>;
 };
 
@@ -69,8 +59,12 @@ export function Level(props: LevelProps) {
   });
 
   let mouse = VEC_ZERO;
-  createComputed<Vec>((prev) => {
-    const m = props.mouse;
+  createComputed<Vec | undefined>((prev) => {
+    const data = props.mouse;
+
+    if (!(data.buttons() & 1)) return;
+
+    const m = data.pos();
 
     if (prev) {
       mouse = addVec(mouse, scale(subtractVec(m, prev), 1 / 320));

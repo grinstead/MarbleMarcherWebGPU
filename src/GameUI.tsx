@@ -1,37 +1,11 @@
-import {
-  Vec,
-  addVec,
-  createMouseTracker,
-  subtractVec,
-} from "@grinstead/ambush";
-import { Setter, createComputed } from "solid-js";
 import { GameStore } from "./GameStore.ts";
 import { classnames } from "@grinstead/classnames";
 
 export type GameUIProps = {
-  setMouseInput: Setter<Vec>;
   store: GameStore;
 };
 
-const PRIMARY_MOUSE_BUTTON = 1;
-
 export function GameUI(props: GameUIProps) {
-  const [mouse, trackMouseInElement] = createMouseTracker();
-
-  createComputed<Vec | undefined>((prev) => {
-    if (!mouse.tracked) return;
-
-    const input = mouse.pos();
-    if (!prev) return input;
-
-    if (mouse.buttons() & PRIMARY_MOUSE_BUTTON) {
-      const diff = subtractVec(input, prev);
-      props.setMouseInput((curr) => addVec(curr, diff));
-    }
-
-    return input;
-  });
-
   // createEffect<Vec>((prevPos) => {
   //   const pos = mouse.pos();
 
@@ -51,7 +25,6 @@ export function GameUI(props: GameUIProps) {
     <>
       <div
         ref={(div) => {
-          trackMouseInElement(div);
           requestAnimationFrame(() => {
             div.focus();
           });

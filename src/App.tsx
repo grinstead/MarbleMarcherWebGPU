@@ -1,20 +1,17 @@
 import "./App.css";
 import { Graphics } from "./Graphics.tsx";
-import { GameUI } from "./GameUI.tsx";
 import { createGameStore } from "./GameStore.ts";
 import {
   BaseFrameTimer,
   E_GPU_NOSUPPORT,
-  FrameTimer,
   GPUContainer,
   GPULoadError,
   GPUWorkQueue,
   GameLoop,
-  lerp,
+  createMouseTracker,
   useTime,
 } from "@grinstead/ambush";
-import { ErrorBoundary, batch, createMemo, createSignal } from "solid-js";
-import { produce } from "solid-js/store";
+import { ErrorBoundary, createEffect, createMemo } from "solid-js";
 import { Game } from "./Game.tsx";
 import { DebugControls } from "./DebugControls.tsx";
 
@@ -26,6 +23,8 @@ function App() {
   const fps = createMemo(() => (time(), timer.fps));
 
   let canvas: undefined | HTMLCanvasElement;
+
+  const [mouse, trackMouseInElement] = createMouseTracker();
 
   return (
     <>
@@ -44,13 +43,13 @@ function App() {
           return <div>{String(e)}</div>;
         }}
       >
-        <div class="game">
+        <div ref={trackMouseInElement} class="game">
           <canvas ref={canvas} class="canvas" width={1280} height={720} />
           <GPUContainer canvas={canvas!}>
             <GameLoop.Provider steps={["main", "render"]} timer={timer}>
               <GPUWorkQueue.Provider>
                 <Graphics store={store} />
-                <Game store={store} setStore={setStore} />
+                <Game mouse={mouse} store={store} setStore={setStore} />
               </GPUWorkQueue.Provider>
             </GameLoop.Provider>
           </GPUContainer>
