@@ -1,5 +1,4 @@
 import {
-  BufferBinding,
   FrameTimer,
   GameLoop,
   MouseAccessors,
@@ -18,13 +17,17 @@ import {
 } from "@grinstead/ambush";
 import { Fractal, nearestPoint } from "./Fractal.tsx";
 import { LevelData } from "./LevelData.ts";
-import { Accessor, createComputed, createMemo, createSignal } from "solid-js";
 import {
-  IDENTITY,
-  MatrixBinary,
-  rotateAboutX,
-  rotateAboutY,
-} from "./Matrix.ts";
+  Accessor,
+  Match,
+  Setter,
+  Switch,
+  createComputed,
+  createMemo,
+  createSignal,
+} from "solid-js";
+import { MatrixBinary, rotateAboutY } from "./Matrix.ts";
+import { MarbleCamera } from "./Camera.tsx";
 
 const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
 
@@ -50,28 +53,65 @@ export function Level(props: LevelProps) {
   const time = useTime(() => props.timer);
 
   const start = props.level.marblePosition;
-  const [pMarble, setPMarble] = createSignal(vec(start.x, start.y, start.z), {
+  const [marble, setMarble] = createSignal(vec(start.x, start.y, start.z), {
     equals: vecEqual,
   });
 
-  const [cameraData, setCameraData] = createSignal(VEC_ZERO, {
-    equals: vecEqual,
-  });
-
-  let mouse = VEC_ZERO;
-  createComputed<Vec | undefined>((prev) => {
-    const data = props.mouse;
-
-    if (!(data.buttons() & 1)) return;
-
-    const m = data.pos();
-
-    if (prev) {
-      mouse = addVec(mouse, scale(subtractVec(m, prev), 1 / 320));
+  const [cameraOffset, setCameraOffset] = createSignal(
+    vec(props.level.startLookDirection, -0.3, 15),
+    {
+      equals: vecEqual,
     }
+  );
 
-    return m;
-  });
+  return (
+    <>
+      <MouseTracking mouse={props.mouse} setCameraOffset={setCameraOffset} />
+      <Switch>
+        <Match when={time() < 3}>
+          <Fractal {...props.level} />
+          <h1 class="countdown">{3 - Math.floor(time())}</h1>
+        </Match>
+        <Match when={true}>
+          <LevelGameplay
+            {...props}
+            marble={marble()}
+            setMarble={setMarble}
+            cameraOffset={cameraOffset()}
+            timer={props.timer.subtimer()}
+          />
+        </Match>
+      </Switch>
+      <VectorBinding
+        label="iMarblePos"
+        group={0}
+        id={8}
+        value={xyzArray(marble())}
+      />
+      <MarbleCamera
+        marbleRadius={props.level.marbleRadius}
+        marble={marble()}
+        offset={cameraOffset()}
+      />
+    </>
+  );
+}
+
+function animate(base: number, anim: number, time: Accessor<number>) {
+  return base + (anim && anim * Math.sin(time() * 0.9));
+}
+
+type LevelGameplayProps = {
+  level: LevelData;
+  timer: FrameTimer;
+  marble: Vec;
+  setMarble: Setter<Vec>;
+  cameraOffset: Vec;
+  heldKeys: Set<string>;
+};
+
+function LevelGameplay(props: LevelGameplayProps) {
+  const time = useTime(() => props.timer);
 
   const shape = createMemo(() => {
     const { level } = props;
@@ -87,26 +127,20 @@ export function Level(props: LevelProps) {
 
   const runStep = createMemo(() => {
     const { heldKeys, timer } = props;
-    const { startLookDirection, marbleRadius } = props.level;
+    const { marbleRadius } = props.level;
     let v = VEC_ZERO;
     let p = VEC_ZERO;
     let deltaTime = 0;
-    let prevMouse = mouse;
-    let camera = vec(startLookDirection, -0.3, 15);
-    setCameraData(camera);
-
-    updateCamera();
 
     return step;
 
     function step() {
-      updateCamera();
-
       deltaTime = timer.deltaTime;
       if (!deltaTime) return;
 
       let onGround = false;
-      p = pMarble();
+      p = props.marble;
+
       for (let i = 0; i < NUM_PHYSICS_STEPS; i++) {
         gravity();
         onGround = collision() || onGround;
@@ -120,23 +154,7 @@ export function Level(props: LevelProps) {
       // apply some cheap friction
       v = scale(v, onGround ? GROUND_FRICTION : AIR_FRICTION);
 
-      setPMarble(p);
-    }
-
-    function updateCamera() {
-      if (vecEqual(mouse, prevMouse)) return;
-
-      const diff = subtractVec(mouse, prevMouse);
-      prevMouse = mouse;
-
-      let { x, y } = subtractVec(camera, diff);
-      while (x > Math.PI) x -= 2 * Math.PI;
-      while (x < Math.PI) x += 2 * Math.PI;
-
-      y = Math.min(Math.max(y, -Math.PI / 2), Math.PI / 2);
-
-      camera = vec(x, y, camera.z);
-      setCameraData(camera);
+      props.setMarble(p);
     }
 
     function gravity() {
@@ -169,7 +187,7 @@ export function Level(props: LevelProps) {
 
     function addUserInput(onGround: boolean) {
       const cameraMatrix = new MatrixBinary();
-      rotateAboutY(cameraMatrix, camera.x);
+      rotateAboutY(cameraMatrix, props.cameraOffset.x);
 
       const dMarble = vec(
         (heldKeys.has("d") ? 1 : 0) - (heldKeys.has("a") ? 1 : 0),
@@ -187,29 +205,6 @@ export function Level(props: LevelProps) {
     }
   });
 
-  const camera = new MatrixBinary();
-
-  const cameraMatrix = createMemo(() => {
-    const { marbleRadius } = props.level;
-
-    const { x, y, z } = cameraData();
-
-    camera.set(IDENTITY);
-    rotateAboutX(camera, y);
-    rotateAboutY(camera, x);
-
-    let camPos = pMarble();
-    camPos = addVec(camPos, camera.multVec(vec(0, 0, marbleRadius * z)));
-
-    camPos = addVec(camPos, scale(camera.colY(), marbleRadius * z * 0.1));
-
-    const mat = camera.snapshot();
-
-    mat.set(xyzArray(camPos), 12);
-
-    return mat;
-  });
-
   return (
     <>
       <Fractal
@@ -220,17 +215,35 @@ export function Level(props: LevelProps) {
         flagPosition={props.level.flagPosition}
       />
       <GameLoop.Part step="main" work={runStep()} />
-      <VectorBinding
-        label="iMarblePos"
-        group={0}
-        id={8}
-        value={xyzArray(pMarble())}
-      />
-      <BufferBinding label="iMat" group={0} id={0} value={cameraMatrix()} />
     </>
   );
 }
 
-function animate(base: number, anim: number, time: Accessor<number>) {
-  return base + (anim && anim * Math.sin(time() * 0.9));
+function MouseTracking(props: {
+  mouse: MouseAccessors;
+  setCameraOffset: Setter<Vec>;
+}): undefined {
+  createComputed<Vec | undefined>((prev) => {
+    const data = props.mouse;
+
+    // drop tracking data if the mouse button is not pressed
+    if (!data.buttons()) return;
+
+    const m = data.pos();
+    if (!prev) return m;
+
+    const diff = scale(subtractVec(m, prev), 1 / 320);
+
+    props.setCameraOffset((camera) => {
+      let { x, y } = subtractVec(camera, diff);
+      while (x > Math.PI) x -= 2 * Math.PI;
+      while (x < Math.PI) x += 2 * Math.PI;
+
+      y = Math.min(Math.max(y, -Math.PI / 2), Math.PI / 2);
+
+      return vec(x, y, camera.z);
+    });
+
+    return m;
+  });
 }
