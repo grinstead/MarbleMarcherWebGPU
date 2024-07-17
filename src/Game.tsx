@@ -1,19 +1,14 @@
-import { SetStoreFunction, unwrap } from "solid-js/store";
+import { SetStoreFunction } from "solid-js/store";
 import { GameStore, KeyboardTask } from "./GameStore.ts";
 import { GameUI } from "./GameUI.tsx";
 import { Level } from "./Level.tsx";
-import { Show, createMemo, untrack, useContext } from "solid-js";
+import { Show, createMemo, createSignal, untrack, useContext } from "solid-js";
 import {
   GPUWorkQueueContext,
   GameLoop,
   GameLoopContext,
   VEC_ZERO,
-  addVec,
-  scale,
-  vec,
-  vecEqual,
 } from "@grinstead/ambush";
-import { MatrixBinary, rotateAboutY } from "./Matrix.ts";
 
 export type GameProps = {
   store: GameStore;
@@ -23,6 +18,7 @@ export type GameProps = {
 export function Game(props: GameProps) {
   const graphics = useContext(GPUWorkQueueContext)!;
   const gameloop = useContext(GameLoopContext)!;
+  const [mouse, setMouse] = createSignal(VEC_ZERO);
 
   let held = new Set<string>();
 
@@ -90,10 +86,15 @@ export function Game(props: GameProps) {
   return (
     <>
       <GameLoop.Part step="main" work={mainLoop()} />
-      <GameUI store={props.store} setStore={props.setStore} />
+      <GameUI store={props.store} setMouseInput={setMouse} />
       <Show keyed when={levelTime()}>
         {(timer) => (
-          <Level level={props.store.level} timer={timer} heldKeys={held} />
+          <Level
+            level={props.store.level}
+            timer={timer}
+            heldKeys={held}
+            mouse={mouse()}
+          />
         )}
       </Show>
       <GameLoop.Part

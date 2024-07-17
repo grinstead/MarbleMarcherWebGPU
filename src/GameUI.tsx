@@ -1,32 +1,36 @@
 import {
-  VEC_ZERO,
   Vec,
   addVec,
   createMouseTracker,
-  scale,
   subtractVec,
-  vec,
-  xyzArray,
 } from "@grinstead/ambush";
-import {
-  IDENTITY,
-  MatrixBinary,
-  rotateAboutX,
-  rotateAboutY,
-  translate,
-} from "./Matrix.ts";
-import { For, Show, createEffect, createRenderEffect } from "solid-js";
+import { Setter, createComputed } from "solid-js";
 import { GameStore } from "./GameStore.ts";
-import { SetStoreFunction } from "solid-js/store";
 import { classnames } from "@grinstead/classnames";
 
 export type GameUIProps = {
+  setMouseInput: Setter<Vec>;
   store: GameStore;
-  setStore: SetStoreFunction<GameStore>;
 };
+
+const PRIMARY_MOUSE_BUTTON = 1;
 
 export function GameUI(props: GameUIProps) {
   const [mouse, trackMouseInElement] = createMouseTracker();
+
+  createComputed<Vec | undefined>((prev) => {
+    if (!mouse.tracked) return;
+
+    const input = mouse.pos();
+    if (!prev) return input;
+
+    if (mouse.buttons() & PRIMARY_MOUSE_BUTTON) {
+      const diff = subtractVec(input, prev);
+      props.setMouseInput((curr) => addVec(curr, diff));
+    }
+
+    return input;
+  });
 
   // createEffect<Vec>((prevPos) => {
   //   const pos = mouse.pos();
