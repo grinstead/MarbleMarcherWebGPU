@@ -180,7 +180,12 @@ function LevelGameplay(props: LevelGameplayProps) {
 
       for (let i = 0; i < NUM_PHYSICS_STEPS; i++) {
         gravity();
-        onGround = collision() || onGround;
+        const result = collision();
+        if (result === "crushed") {
+          props.onReset();
+          return;
+        }
+        onGround ||= result;
         p = addVec(p, scale(v, deltaTime / NUM_PHYSICS_STEPS));
       }
 
@@ -203,10 +208,14 @@ function LevelGameplay(props: LevelGameplayProps) {
      * Computes collision with the fractal
      * @returns whether the fractal is "on the ground"
      */
-    function collision(): boolean {
+    function collision(): boolean | "crushed" {
       const nearest = nearestPoint(shape(), p);
       const delta = subtractVec(nearest, p);
       const distance = magnitude(delta);
+
+      if (distance < marbleRadius * 0.001) {
+        return "crushed";
+      }
 
       if (distance > marbleRadius) {
         // no collision
