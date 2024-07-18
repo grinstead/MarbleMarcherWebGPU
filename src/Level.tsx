@@ -196,6 +196,11 @@ function LevelGameplay(props: LevelGameplayProps) {
       // apply some cheap friction
       v = scale(v, onGround ? GROUND_FRICTION : AIR_FRICTION);
 
+      if (p.y < props.level.deathBarrier) {
+        props.onReset();
+        return;
+      }
+
       props.setMarble(p);
     }
 

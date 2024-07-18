@@ -1,6 +1,6 @@
 Things remaining
 
-- [ ] Level Failures (Crush, Too Far)
+- [x] Level Failures (Crush, Too Far)
 - [ ] Sound effects
 - [ ] Music
 - [ ] Level Transitions
