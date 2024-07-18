@@ -3,12 +3,18 @@ import {
   GameLoop,
   GameLoopContext,
   MouseAccessors,
+  VEC_X,
+  VEC_Y,
+  VEC_Z,
   VEC_ZERO,
   Vec,
   VectorBinding,
   addVec,
+  cross,
   dot,
   magnitude,
+  normalize,
+  rescale,
   scale,
   subtractVec,
   useTime,
@@ -29,7 +35,7 @@ import {
   createSignal,
   useContext,
 } from "solid-js";
-import { MatrixBinary, rotateAboutY } from "./Matrix.ts";
+import { IDENTITY, MatrixBinary, rotateAboutY } from "./Matrix.ts";
 import { MarbleCamera } from "./Camera.tsx";
 
 const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
@@ -93,6 +99,10 @@ function Level(props: InternalLevelProps) {
     }
   );
 
+  const [worldMatrix, setWorldMatrix] = createSignal<Float32Array>(IDENTITY, {
+    equals: arrayEqual,
+  });
+
   return (
     <>
       <MouseTracking mouse={props.mouse} setCameraOffset={setCameraOffset} />
@@ -107,6 +117,7 @@ function Level(props: InternalLevelProps) {
             level={props.level}
             marble={marble()}
             setMarble={setMarble}
+            setWorldMatrix={setWorldMatrix}
             cameraOffset={cameraOffset()}
             onReset={props.onReset}
             timer={props.timer.subtimer()}
@@ -121,6 +132,7 @@ function Level(props: InternalLevelProps) {
       />
       <MarbleCamera
         marbleRadius={props.level.marbleRadius}
+        worldMatrix={worldMatrix()}
         marble={marble()}
         offset={cameraOffset()}
       />
@@ -137,6 +149,7 @@ type LevelGameplayProps = {
   timer: FrameTimer;
   marble: Vec;
   setMarble: Setter<Vec>;
+  setWorldMatrix: Setter<Float32Array>;
   cameraOffset: Vec;
   heldKeys: Set<string>;
   onReset: () => void;
@@ -163,6 +176,7 @@ function LevelGameplay(props: LevelGameplayProps) {
     let v = VEC_ZERO;
     let p = VEC_ZERO;
     let deltaTime = 0;
+    const worldMatrix = new MatrixBinary();
 
     return step;
 
@@ -174,6 +188,24 @@ function LevelGameplay(props: LevelGameplayProps) {
 
       deltaTime = timer.deltaTime;
       if (!deltaTime) return;
+
+      if (props.level.isPlanet) {
+        const yAxis = normalize(p) ?? VEC_Y;
+        const zAxis = rescale(cross(yAxis, worldMatrix.multVec(VEC_X)), -1)!;
+        const xAxis = rescale(cross(zAxis, yAxis), -1)!;
+
+        // prettier-ignore
+        worldMatrix.set(new Float32Array([
+          xAxis.x, xAxis.y, xAxis.z, 0,
+          yAxis.x, yAxis.y, yAxis.z, 0,
+          zAxis.x, zAxis.y, zAxis.z, 0,
+                0,       0,       0, 1,
+        ]));
+      } else {
+        worldMatrix.set(IDENTITY);
+      }
+
+      props.setWorldMatrix(worldMatrix.snapshot());
 
       let onGround = false;
       p = props.marble;
@@ -206,7 +238,9 @@ function LevelGameplay(props: LevelGameplayProps) {
 
     function gravity() {
       let f = marbleRadius * (GRAVITY / NUM_PHYSICS_STEPS);
-      v = addVec(v, vec(0, -f * deltaTime, 0));
+      let g = (props.level.isPlanet && normalize(p)) || vec(0, 1, 0);
+
+      v = subtractVec(v, scale(g, f * deltaTime));
     }
 
     /**
@@ -240,16 +274,22 @@ function LevelGameplay(props: LevelGameplayProps) {
       const cameraMatrix = new MatrixBinary();
       rotateAboutY(cameraMatrix, props.cameraOffset.x);
 
-      const dMarble = vec(
+      let dMarble = vec(
         (heldKeys.has("d") ? 1 : 0) - (heldKeys.has("a") ? 1 : 0),
         0,
         (heldKeys.has("s") ? 1 : 0) - (heldKeys.has("w") ? 1 : 0)
       );
 
+      // pick rotation based off of camera rotation
+      dMarble = cameraMatrix.multVec(dMarble);
+
+      // orient to the planet
+      dMarble = worldMatrix.multVec(dMarble);
+
       v = addVec(
         v,
         scale(
-          cameraMatrix.multVec(dMarble),
+          dMarble,
           (onGround ? GROUND_FORCE : AIR_FORCE) * marbleRadius * deltaTime
         )
       );
@@ -297,4 +337,16 @@ function MouseTracking(props: {
 
     return m;
   });
+}
+
+function arrayEqual(a: ArrayLike<any>, b: ArrayLike<any>): boolean {
+  const length = a.length;
+  if (b.length !== length) return false;
+
+  let equal = true;
+  for (let i = 0; equal && i < length; i++) {
+    equal = a[i] === b[i];
+  }
+
+  return equal;
 }

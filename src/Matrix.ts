@@ -19,9 +19,19 @@ export class MatrixBinary {
     this.columnMajor = new Float32Array(copyFrom);
   }
 
+  setColumn(column: number, data: Array<number>) {
+    this.columnMajor.set(data, column * 4);
+  }
+
   set(data: Float32Array) {
     claimMatrix(this);
     this.columnMajor.set(data);
+  }
+
+  leftMultiply(other: Float32Array) {
+    const colMajor = claimMatrix(this);
+    mult(other, colMajor);
+    colMajor.set(SCRATCH_RESULT);
   }
 
   multVec(p: Vec) {
@@ -33,11 +43,6 @@ export class MatrixBinary {
       x * mat[1] + y * mat[5] + z * mat[9],
       x * mat[2] + y * mat[6] + z * mat[10]
     );
-  }
-
-  colY() {
-    const mat = this.columnMajor;
-    return vec(mat[1], mat[5], mat[9]);
   }
 
   snapshot() {
