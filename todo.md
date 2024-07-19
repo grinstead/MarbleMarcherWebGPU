@@ -5,7 +5,7 @@ Things remaining
 - [ ] Music
 - [ ] Level Transitions
 - [ ] Timer
-- [ ] Level End Celebration
+- [x] Level End Celebration
 - [x] Planet Gravity
 - [ ] Pause on Blur
 - [ ] Opening Menu

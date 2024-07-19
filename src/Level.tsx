@@ -104,6 +104,11 @@ function Level(props: InternalLevelProps) {
     equals: arrayEqual,
   });
 
+  /**
+   * Defined if we have a victory, the actual value is the final speed of the marble
+   */
+  const [victory, setVictory] = createSignal<Vec>();
+
   return (
     <>
       <MouseTracking mouse={mouse} setCameraOffset={setCameraOffset} />
@@ -112,16 +117,25 @@ function Level(props: InternalLevelProps) {
           <Fractal {...props.level} />
           <h1 class="countdown">{3 - Math.floor(time())}</h1>
         </Match>
-        <Match when={true}>
+        <Match when={!victory()}>
           <LevelGameplay
             heldKeys={props.heldKeys}
             level={props.level}
             marble={marble()}
+            onVictory={setVictory}
             setMarble={setMarble}
             setWorldMatrix={setWorldMatrix}
             cameraOffset={cameraOffset()}
             onReset={props.onReset}
             timer={props.timer.subtimer()}
+          />
+        </Match>
+        <Match when={true}>
+          <LevelCelebration
+            level={props.level}
+            setMarble={setMarble}
+            worldMatrix={worldMatrix()}
+            endingVelocity={victory()!}
           />
         </Match>
       </Switch>
@@ -149,6 +163,7 @@ type LevelGameplayProps = {
   level: LevelData;
   timer: FrameTimer;
   marble: Vec;
+  onVictory: (finalSpeed: Vec) => void;
   setMarble: Setter<Vec>;
   setWorldMatrix: Setter<Float32Array>;
   cameraOffset: Vec;
@@ -237,7 +252,7 @@ function LevelGameplay(props: LevelGameplayProps) {
       props.setMarble(p);
 
       if (isFinished()) {
-        props.onReset();
+        props.onVictory(v);
       }
     }
 
@@ -367,4 +382,42 @@ function arrayEqual(a: ArrayLike<any>, b: ArrayLike<any>): boolean {
   }
 
   return equal;
+}
+
+function LevelCelebration(props: {
+  level: LevelData;
+  setMarble: Setter<Vec>;
+  endingVelocity: Vec;
+  worldMatrix: Float32Array;
+}) {
+  const gameloop = useContext(GameLoopContext)!;
+  const time = useTime(() => gameloop.timer.subtimer());
+
+  let originalMarble: undefined | Vec;
+
+  return (
+    <>
+      <Fractal {...props.level} />
+      <GameLoop.Part step="main" work={runStep} />
+    </>
+  );
+
+  function runStep() {
+    const { level } = props;
+    const seconds = time();
+    let percentage = Math.min(time() / 3, 1);
+
+    let height = 7.5 + Math.sin(seconds * 5);
+    let target = vec(0, level.marbleRadius * height, 0);
+    target = new MatrixBinary(props.worldMatrix).multVec(target);
+    target = addVec(level.flagPosition, target);
+
+    props.setMarble((prev) => {
+      originalMarble ??= prev;
+
+      const pos = addVec(originalMarble, scale(props.endingVelocity, seconds));
+
+      return addVec(scale(pos, 1 - percentage), scale(target, percentage));
+    });
+  }
 }
