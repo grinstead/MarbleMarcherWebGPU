@@ -129,7 +129,7 @@ fn de_tetrahedron(p: vec4f, r: f32) -> f32 {
 
 fn de_capsule(p: vec4f, h: f32, r: f32) -> f32 {
     let py = p.y - clamp(p.y, -h, h);
-    return (length(p.xyz) - r) / p.w;
+    return (length(vec3f(p.x, py, p.z)) - r) / p.w;
 }
 
 fn de_fractal(point: vec4f) -> f32 {
