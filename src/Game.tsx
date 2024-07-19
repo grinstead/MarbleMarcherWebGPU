@@ -12,7 +12,6 @@ import {
 
 export type GameProps = {
   store: GameStore;
-  mouse: MouseAccessors;
   setStore: SetStoreFunction<GameStore>;
 };
 
@@ -82,11 +81,7 @@ export function Game(props: GameProps) {
       <GameLoop.Part step="main" work={mainLoop()} />
       <GameUI store={props.store}>
         <Show keyed when={JSON.stringify(props.store.level)}>
-          <Level
-            level={props.store.level}
-            heldKeys={held}
-            mouse={props.mouse}
-          />
+          <Level level={props.store.level} heldKeys={held} />
         </Show>
       </GameUI>
       <GameLoop.Part

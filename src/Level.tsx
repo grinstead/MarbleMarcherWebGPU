@@ -1,5 +1,6 @@
 import {
   FrameTimer,
+  GameEngineContext,
   GameLoop,
   GameLoopContext,
   MouseAccessors,
@@ -53,7 +54,6 @@ const NUM_PHYSICS_STEPS = 6;
 
 export type LevelProps = {
   level: LevelData;
-  mouse: MouseAccessors;
   heldKeys: Set<string>;
 };
 
@@ -85,6 +85,7 @@ export type InternalLevelProps = {
 } & LevelProps;
 
 function Level(props: InternalLevelProps) {
+  const { mouse } = useContext(GameEngineContext)!;
   const time = useTime(() => props.timer);
 
   const start = props.level.marblePosition;
@@ -105,7 +106,7 @@ function Level(props: InternalLevelProps) {
 
   return (
     <>
-      <MouseTracking mouse={props.mouse} setCameraOffset={setCameraOffset} />
+      <MouseTracking mouse={mouse} setCameraOffset={setCameraOffset} />
       <Switch>
         <Match when={time() < 3}>
           <Fractal {...props.level} />
