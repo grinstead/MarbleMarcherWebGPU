@@ -1,6 +1,5 @@
 import {
   FrameTimer,
-  GameEngineContext,
   GameLoop,
   GameLoopContext,
   MouseAccessors,
@@ -18,6 +17,7 @@ import {
   rescale,
   scale,
   subtractVec,
+  useGameEngine,
   useTime,
   vec,
   vecEqual,
@@ -85,7 +85,7 @@ export type InternalLevelProps = {
 } & LevelProps;
 
 function Level(props: InternalLevelProps) {
-  const { mouse } = useContext(GameEngineContext)!;
+  const { mouse } = useGameEngine();
   const time = useTime(() => props.timer);
 
   const start = props.level.marblePosition;

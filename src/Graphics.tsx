@@ -2,15 +2,13 @@ import {
   RenderPipeline,
   ScalarBinding,
   VectorBinding,
+  useGameEngine,
 } from "@grinstead/ambush";
-import { GameStore } from "./GameStore.ts";
 import { frag } from "./frag.ts";
 
-export type GameCanvasProps = {
-  store: GameStore;
-};
-
 export function Graphics() {
+  const { area } = useGameEngine();
+
   return (
     <>
       <RenderPipeline
@@ -20,7 +18,12 @@ export function Graphics() {
         fragmentMain="main"
         draw={4}
       />
-      <VectorBinding label="iResolution" group={0} id={1} value={[1280, 720]} />
+      <VectorBinding
+        label="iResolution"
+        group={0}
+        id={1}
+        value={[area.width, area.height]}
+      />
       <ScalarBinding label="iExposure" group={0} id={12} value={1} />
     </>
   );
