@@ -235,6 +235,10 @@ function LevelGameplay(props: LevelGameplayProps) {
       }
 
       props.setMarble(p);
+
+      if (isFinished()) {
+        props.onReset();
+      }
     }
 
     function gravity() {
@@ -294,6 +298,19 @@ function LevelGameplay(props: LevelGameplayProps) {
           (onGround ? GROUND_FORCE : AIR_FORCE) * marbleRadius * deltaTime
         )
       );
+    }
+
+    function isFinished() {
+      const flag = props.level.flagPosition;
+      const inVerticalRange = props.level.isPlanet
+        ? flag.y - 7 * marbleRadius <= p.y && p.y <= flag.y
+        : flag.y <= p.y && p.y <= flag.y + 7 * marbleRadius;
+
+      if (!inVerticalRange) return false;
+
+      const fx = p.x - flag.x;
+      const fz = p.z - flag.z;
+      return fx * fx + fz * fz < 6 * marbleRadius * marbleRadius;
     }
   });
 
