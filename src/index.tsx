@@ -1,9 +1,9 @@
 /* @refresh reload */
-import { render } from 'solid-js/web'
+import { render } from "solid-js/web";
 
-import './index.css'
-import App from './App'
+import "./index.css";
+import { Embedded } from "./Embedded.tsx";
 
-const root = document.getElementById('root')
+const root = document.getElementById("root");
 
-render(() => <App />, root!)
+render(() => <Embedded />, root!);
