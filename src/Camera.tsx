@@ -5,7 +5,6 @@ import {
   Vec,
   addVec,
   scale,
-  vec,
   xyzArray,
 } from "@grinstead/ambush";
 import {

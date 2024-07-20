@@ -7,7 +7,6 @@ import {
   GPUWorkQueueContext,
   GameLoop,
   GameLoopContext,
-  MouseAccessors,
 } from "@grinstead/ambush";
 
 export type GameProps = {

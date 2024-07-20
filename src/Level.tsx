@@ -5,7 +5,6 @@ import {
   MouseAccessors,
   VEC_X,
   VEC_Y,
-  VEC_Z,
   VEC_ZERO,
   Vec,
   VectorBinding,
