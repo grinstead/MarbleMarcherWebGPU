@@ -51,8 +51,11 @@ const GROUND_RATIO = 1.15;
 
 const NUM_PHYSICS_STEPS = 6;
 
+const VICTORY_SECONDS = 3;
+
 export type LevelProps = {
   level: LevelData;
+  onVictory: () => void;
   heldKeys: Set<string>;
 };
 
@@ -132,6 +135,7 @@ function Level(props: InternalLevelProps) {
         <Match when={true}>
           <LevelCelebration
             level={props.level}
+            onVictory={props.onVictory}
             setMarble={setMarble}
             worldMatrix={worldMatrix()}
             endingVelocity={victory()!}
@@ -387,6 +391,7 @@ function LevelCelebration(props: {
   level: LevelData;
   setMarble: Setter<Vec>;
   endingVelocity: Vec;
+  onVictory: () => void;
   worldMatrix: Float32Array;
 }) {
   const gameloop = useContext(GameLoopContext)!;
@@ -404,7 +409,13 @@ function LevelCelebration(props: {
   function runStep() {
     const { level } = props;
     const seconds = time();
-    let percentage = Math.min(time() / 3, 1);
+
+    if (seconds > VICTORY_SECONDS) {
+      props.onVictory();
+      return;
+    }
+
+    let percentage = Math.min(seconds / (0.6 * VICTORY_SECONDS), 1);
 
     let height = 7.5 + Math.sin(seconds * 5);
     let target = vec(0, level.marbleRadius * height, 0);

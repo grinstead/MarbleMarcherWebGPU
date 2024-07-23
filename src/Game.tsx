@@ -80,8 +80,16 @@ export function Game(props: GameProps) {
     <>
       <GameLoop.Part step="main" work={mainLoop()} />
       <GameUI store={props.store}>
-        <Show keyed when={props.store.level}>
-          <Level level={levels[props.store.level]} heldKeys={held} />
+        <Show keyed when={levels[props.store.level]}>
+          {(level) => (
+            <Level
+              level={level}
+              onVictory={() => {
+                props.setStore("level", (prev) => prev + 1);
+              }}
+              heldKeys={held}
+            />
+          )}
         </Show>
       </GameUI>
       <GameLoop.Part
