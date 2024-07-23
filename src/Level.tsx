@@ -26,6 +26,7 @@ import { Fractal, FractalProps, nearestPoint } from "./Fractal.tsx";
 import { LevelData } from "./LevelData.ts";
 import {
   Accessor,
+  For,
   Match,
   Setter,
   Show,
@@ -357,10 +358,18 @@ function LevelGameplay(props: LevelGameplayProps) {
     }
   });
 
+  const displayTime = createMemo(() => timerText(time()));
+
   return (
     <>
       <Fractal {...fractal()} />
       <GameLoop.Part step="main" work={runStep()} />
+      <h2 class="timer">
+        <span>{displayTime()[0]}</span>
+        <span>{displayTime()[1]}</span>:<span>{displayTime()[3]}</span>
+        <span>{displayTime()[4]}</span>.<span>{displayTime()[6]}</span>
+        <span>{displayTime()[7]}</span>
+      </h2>
     </>
   );
 }
@@ -451,4 +460,21 @@ function LevelCelebration(props: {
       return addVec(scale(pos, 1 - percentage), scale(target, percentage));
     });
   }
+}
+
+export function timerText(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  const fullSeconds = Math.floor(seconds) % 60;
+  const centaseconds = Math.floor((seconds - Math.floor(seconds)) * 100);
+
+  return `${minLengthDigits(2, minutes)}:${minLengthDigits(
+    2,
+    fullSeconds
+  )}.${minLengthDigits(2, centaseconds)}`;
+}
+
+export function minLengthDigits(minLength: number, value: number) {
+  const str = String(value);
+  const needs = minLength - str.length;
+  return needs > 0 ? `${"0".repeat(needs)}${str}` : str;
 }
