@@ -46,5 +46,20 @@ export function MarbleCamera(props: MarbleCameraProps) {
     return mat;
   });
 
-  return <BufferBinding label="iMat" group={0} id={0} value={matrix()} />;
+  return <FreeCamera matrix={matrix()} />;
+}
+
+export function OrbitCamera(props: { target: Vec; offset: Vec }) {
+  return (
+    <MarbleCamera
+      marble={props.target}
+      offset={props.offset}
+      worldMatrix={IDENTITY}
+      marbleRadius={0}
+    />
+  );
+}
+
+export function FreeCamera(props: { matrix: Float32Array }) {
+  return <BufferBinding label="iMat" group={0} id={0} value={props.matrix} />;
 }

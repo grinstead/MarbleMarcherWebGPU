@@ -37,6 +37,7 @@ import {
 } from "solid-js";
 import { IDENTITY, MatrixBinary, rotateAboutY } from "./Matrix.ts";
 import { MarbleCamera } from "./Camera.tsx";
+import { Marble } from "./Marble.tsx";
 
 const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
 
@@ -148,12 +149,7 @@ function Level(props: InternalLevelProps) {
           />
         </Match>
       </Switch>
-      <VectorBinding
-        label="iMarblePos"
-        group={0}
-        id={8}
-        value={xyzArray(marble())}
-      />
+      <Marble position={marble()} />
       <MarbleCamera
         marbleRadius={props.level.marbleRadius}
         worldMatrix={worldMatrix()}

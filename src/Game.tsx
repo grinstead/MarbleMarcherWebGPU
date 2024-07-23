@@ -2,13 +2,14 @@ import { SetStoreFunction } from "solid-js/store";
 import { GameStore, KeyboardTask } from "./GameStore.ts";
 import { GameUI } from "./GameUI.tsx";
 import { Level } from "./Level.tsx";
-import { Show, createMemo, untrack, useContext } from "solid-js";
+import { Show, createMemo, createSignal, untrack, useContext } from "solid-js";
 import {
   GPUWorkQueueContext,
   GameLoop,
   GameLoopContext,
 } from "@grinstead/ambush";
 import { levels } from "./LevelData.ts";
+import { MainMenu } from "./MainMenu.tsx";
 
 export type GameProps = {
   store: GameStore;
@@ -18,6 +19,8 @@ export type GameProps = {
 export function Game(props: GameProps) {
   const graphics = useContext(GPUWorkQueueContext)!;
   const gameloop = useContext(GameLoopContext)!;
+
+  const [isPlaying, setPlaying] = createSignal(true);
 
   let held = new Set<string>();
 
@@ -80,7 +83,11 @@ export function Game(props: GameProps) {
     <>
       <GameLoop.Part step="main" work={mainLoop()} />
       <GameUI store={props.store}>
-        <Show keyed when={levels[props.store.level]}>
+        <Show
+          keyed
+          when={isPlaying() && levels[props.store.level]}
+          fallback={<MainMenu />}
+        >
           {(level) => (
             <Level
               level={level}
