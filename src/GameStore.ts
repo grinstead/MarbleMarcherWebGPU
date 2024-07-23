@@ -26,14 +26,14 @@ export type GameTasks = {
 };
 
 export type GameStore = {
-  level: LevelData;
+  level: number;
   paused: boolean;
   loop: Docket<GameTasks, GameLoopTypes>;
 };
 
 export function createGameStore() {
   return createStore<GameStore>({
-    level: { ...levels[0] },
+    level: 4,
     paused: true,
     loop: new Docket<GameTasks, GameLoopTypes>({
       input: { events: ["step"] },

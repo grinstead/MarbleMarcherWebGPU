@@ -8,6 +8,7 @@ import {
   GameLoop,
   GameLoopContext,
 } from "@grinstead/ambush";
+import { levels } from "./LevelData.ts";
 
 export type GameProps = {
   store: GameStore;
@@ -79,8 +80,8 @@ export function Game(props: GameProps) {
     <>
       <GameLoop.Part step="main" work={mainLoop()} />
       <GameUI store={props.store}>
-        <Show keyed when={JSON.stringify(props.store.level)}>
-          <Level level={props.store.level} heldKeys={held} />
+        <Show keyed when={props.store.level}>
+          <Level level={levels[props.store.level]} heldKeys={held} />
         </Show>
       </GameUI>
       <GameLoop.Part
