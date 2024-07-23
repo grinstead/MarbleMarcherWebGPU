@@ -38,6 +38,7 @@ import {
 import { IDENTITY, MatrixBinary, rotateAboutY } from "./Matrix.ts";
 import { MarbleCamera } from "./Camera.tsx";
 import { Marble } from "./Marble.tsx";
+import { playBounceSound } from "./hacks.ts";
 
 const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
 
@@ -237,6 +238,7 @@ function LevelGameplay(props: LevelGameplayProps) {
       props.setWorldMatrix(worldMatrix.snapshot());
 
       let onGround = false;
+      let maxBounce = 0;
       p = props.marble;
 
       for (let i = 0; i < NUM_PHYSICS_STEPS; i++) {
@@ -245,9 +247,17 @@ function LevelGameplay(props: LevelGameplayProps) {
         if (result === "crushed") {
           props.onReset();
           return;
+        } else if (typeof result === "number") {
+          onGround = true;
+          maxBounce = Math.max(result, maxBounce);
+        } else if (result === true) {
+          onGround = true;
         }
-        onGround ||= result;
         p = addVec(p, scale(v, deltaTime / NUM_PHYSICS_STEPS));
+      }
+
+      if (maxBounce > 0) {
+        playBounceSound(maxBounce);
       }
 
       // add the velocity the user is inputing, but it will
@@ -285,7 +295,7 @@ function LevelGameplay(props: LevelGameplayProps) {
      * Computes collision with the fractal
      * @returns whether the fractal is "on the ground"
      */
-    function collision(): boolean | "crushed" {
+    function collision(): boolean | number | "crushed" {
       const nearest = nearestPoint(shape(), p);
       const delta = subtractVec(nearest, p);
       const distance = magnitude(delta);
@@ -305,7 +315,7 @@ function LevelGameplay(props: LevelGameplayProps) {
       p = subtractVec(p, subtractVec(scale(direction, marbleRadius), delta));
       v = subtractVec(v, scale(direction, dv * MARBLE_BOUNCE));
 
-      return true;
+      return dv;
     }
 
     function addUserInput(onGround: boolean) {

@@ -1,6 +1,7 @@
 import { JSXElement } from "solid-js";
 import { GameStore } from "./GameStore.ts";
 import { classnames } from "@grinstead/classnames";
+import { loadBounceSounds } from "./hacks.ts";
 
 export type GameUIProps = {
   store: GameStore;
@@ -17,6 +18,7 @@ export function GameUI(props: GameUIProps) {
       }}
       tabIndex={1}
       onkeydown={(e) => {
+        loadBounceSounds();
         props.store.loop.add.input({ type: "pressed", key: e.key });
       }}
       onkeyup={(e) => {
