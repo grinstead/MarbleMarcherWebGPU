@@ -7,7 +7,6 @@ import {
   VEC_Y,
   VEC_ZERO,
   Vec,
-  VectorBinding,
   addVec,
   cross,
   dot,
@@ -20,13 +19,11 @@ import {
   useTime,
   vec,
   vecEqual,
-  xyzArray,
 } from "@grinstead/ambush";
 import { Fractal, FractalProps, nearestPoint } from "./Fractal.tsx";
 import { LevelData } from "./LevelData.ts";
 import {
   Accessor,
-  For,
   Match,
   Setter,
   Show,

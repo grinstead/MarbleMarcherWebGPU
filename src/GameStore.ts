@@ -1,5 +1,4 @@
 import { createStore } from "solid-js/store";
-import { LevelData, levels } from "./LevelData.ts";
 import { Docket } from "@grinstead/ambush";
 
 export type GameLoopTypes = "step";
