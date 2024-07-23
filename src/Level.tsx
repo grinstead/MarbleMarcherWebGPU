@@ -22,7 +22,7 @@ import {
   vecEqual,
   xyzArray,
 } from "@grinstead/ambush";
-import { Fractal, nearestPoint } from "./Fractal.tsx";
+import { Fractal, FractalProps, nearestPoint } from "./Fractal.tsx";
 import { LevelData } from "./LevelData.ts";
 import {
   Accessor,
@@ -57,6 +57,13 @@ export type LevelProps = {
   level: LevelData;
   onVictory: () => void;
   heldKeys: Set<string>;
+};
+
+export type LevelEndState = {
+  time: number;
+  endVelocity: Vec;
+  endPosition: Vec;
+  fractal: FractalProps;
 };
 
 function LevelWrapper(props: LevelProps) {
@@ -109,7 +116,7 @@ function Level(props: InternalLevelProps) {
   /**
    * Defined if we have a victory, the actual value is the final speed of the marble
    */
-  const [victory, setVictory] = createSignal<Vec>();
+  const [victory, setVictory] = createSignal<LevelEndState>();
 
   return (
     <>
@@ -134,11 +141,10 @@ function Level(props: InternalLevelProps) {
         </Match>
         <Match when={true}>
           <LevelCelebration
-            level={props.level}
             onVictory={props.onVictory}
             setMarble={setMarble}
             worldMatrix={worldMatrix()}
-            endingVelocity={victory()!}
+            state={victory()!}
           />
         </Match>
       </Switch>
@@ -166,7 +172,7 @@ type LevelGameplayProps = {
   level: LevelData;
   timer: FrameTimer;
   marble: Vec;
-  onVictory: (finalSpeed: Vec) => void;
+  onVictory: (state: LevelEndState) => void;
   setMarble: Setter<Vec>;
   setWorldMatrix: Setter<Float32Array>;
   cameraOffset: Vec;
@@ -188,6 +194,14 @@ function LevelGameplay(props: LevelGameplayProps) {
       offset: vec(offset.x, animate(offset.y, animation.z, time), offset.z),
     };
   });
+
+  const fractal = createMemo(() => ({
+    ...shape(),
+    color: props.level.color,
+    marbleRadius: props.level.marbleRadius,
+    isPlanet: props.level.isPlanet,
+    flagPosition: props.level.flagPosition,
+  }));
 
   const runStep = createMemo(() => {
     const { heldKeys, timer } = props;
@@ -255,7 +269,12 @@ function LevelGameplay(props: LevelGameplayProps) {
       props.setMarble(p);
 
       if (isFinished()) {
-        props.onVictory(v);
+        props.onVictory({
+          time: timer.time,
+          endVelocity: v,
+          endPosition: p,
+          fractal: fractal(),
+        });
       }
     }
 
@@ -334,13 +353,7 @@ function LevelGameplay(props: LevelGameplayProps) {
 
   return (
     <>
-      <Fractal
-        {...shape()}
-        color={props.level.color}
-        marbleRadius={props.level.marbleRadius}
-        isPlanet={props.level.isPlanet}
-        flagPosition={props.level.flagPosition}
-      />
+      <Fractal {...fractal()} />
       <GameLoop.Part step="main" work={runStep()} />
     </>
   );
@@ -388,9 +401,8 @@ function arrayEqual(a: ArrayLike<any>, b: ArrayLike<any>): boolean {
 }
 
 function LevelCelebration(props: {
-  level: LevelData;
   setMarble: Setter<Vec>;
-  endingVelocity: Vec;
+  state: LevelEndState;
   onVictory: () => void;
   worldMatrix: Float32Array;
 }) {
@@ -401,13 +413,13 @@ function LevelCelebration(props: {
 
   return (
     <>
-      <Fractal {...props.level} />
+      <Fractal {...props.state.fractal} />
       <GameLoop.Part step="main" work={runStep} />
     </>
   );
 
   function runStep() {
-    const { level } = props;
+    const { fractal } = props.state;
     const seconds = time();
 
     if (seconds > VICTORY_SECONDS) {
@@ -418,14 +430,17 @@ function LevelCelebration(props: {
     let percentage = Math.min(seconds / (0.6 * VICTORY_SECONDS), 1);
 
     let height = 7.5 + Math.sin(seconds * 5);
-    let target = vec(0, level.marbleRadius * height, 0);
+    let target = vec(0, fractal.marbleRadius * height, 0);
     target = new MatrixBinary(props.worldMatrix).multVec(target);
-    target = addVec(level.flagPosition, target);
+    target = addVec(fractal.flagPosition, target);
 
     props.setMarble((prev) => {
       originalMarble ??= prev;
 
-      const pos = addVec(originalMarble, scale(props.endingVelocity, seconds));
+      const pos = addVec(
+        originalMarble,
+        scale(props.state.endVelocity, seconds)
+      );
 
       return addVec(scale(pos, 1 - percentage), scale(target, percentage));
     });
