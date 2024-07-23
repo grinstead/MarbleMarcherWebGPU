@@ -40,6 +40,7 @@ import { IDENTITY, MatrixBinary, rotateAboutY } from "./Matrix.ts";
 import { MarbleCamera } from "./Camera.tsx";
 import { Marble } from "./Marble.tsx";
 import { playBounceSound } from "./hacks.ts";
+import { TimeCounter } from "./UI.tsx";
 
 const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
 
@@ -358,18 +359,11 @@ function LevelGameplay(props: LevelGameplayProps) {
     }
   });
 
-  const displayTime = createMemo(() => timerText(time()));
-
   return (
     <>
       <Fractal {...fractal()} />
       <GameLoop.Part step="main" work={runStep()} />
-      <h2 class="timer">
-        <span>{displayTime()[0]}</span>
-        <span>{displayTime()[1]}</span>:<span>{displayTime()[3]}</span>
-        <span>{displayTime()[4]}</span>.<span>{displayTime()[6]}</span>
-        <span>{displayTime()[7]}</span>
-      </h2>
+      <TimeCounter seconds={time()} />
     </>
   );
 }
@@ -430,6 +424,7 @@ function LevelCelebration(props: {
     <>
       <Fractal {...props.state.fractal} />
       <GameLoop.Part step="main" work={runStep} />
+      <TimeCounter seconds={props.state.time} />
     </>
   );
 
