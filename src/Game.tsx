@@ -18,7 +18,7 @@ import {
 } from "@grinstead/ambush";
 import { levels } from "./LevelData.ts";
 import { MainMenu } from "./MainMenu.tsx";
-import { bounceSounds } from "./hacks.ts";
+import { sounds } from "./hacks.ts";
 
 export type GameProps = {
   store: GameStore;
@@ -34,7 +34,13 @@ export function Game(props: GameProps) {
 
   onMount(() => {
     const { audio } = engine;
-    audio.preloadAll(bounceSounds);
+    for (const sound of Object.values(sounds)) {
+      if (Array.isArray(sound)) {
+        audio.preloadAll(sound);
+      } else {
+        audio.preload(sound);
+      }
+    }
   });
 
   let held = new Set<string>();

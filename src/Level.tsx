@@ -36,7 +36,7 @@ import {
 import { IDENTITY, MatrixBinary, rotateAboutY } from "./Matrix.ts";
 import { MarbleCamera } from "./Camera.tsx";
 import { Marble } from "./Marble.tsx";
-import { playBounceSound } from "./hacks.ts";
+import { MARBLE_SOURCE, playBounceSound, sounds } from "./hacks.ts";
 import { TimeCounter } from "./UI.tsx";
 
 const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
@@ -247,6 +247,7 @@ function LevelGameplay(props: LevelGameplayProps) {
         const result = collision();
         if (result === "crushed") {
           props.onReset();
+          engine.audio.play(MARBLE_SOURCE, sounds.shatter);
           return;
         } else if (typeof result === "number") {
           onGround = true;
@@ -276,6 +277,7 @@ function LevelGameplay(props: LevelGameplayProps) {
       props.setMarble(p);
 
       if (isFinished()) {
+        engine.audio.play(null, sounds.goal);
         props.onVictory({
           time: timer.time,
           endVelocity: v,
