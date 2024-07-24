@@ -1,4 +1,5 @@
 import { createMemo, useContext } from "solid-js";
+import { createSignal } from "solid-js";
 import {
   FreeCamera,
   MarbleCamera,
@@ -9,6 +10,9 @@ import { Fractal } from "./Fractal.tsx";
 import { FractalShape, levels } from "./LevelData.ts";
 import { HideMarble } from "./Marble.tsx";
 import { IDENTITY } from "./Matrix.ts";
+import { OverlayMenu } from "./OverlayMenu.tsx";
+import { Countdown } from "./Countdown.tsx";
+import { Timer } from "./Timer.tsx";
 import {
   addVec,
   GameLoopContext,
@@ -21,6 +25,8 @@ import {
 
 export function MainMenu() {
   const { timer } = useContext(GameLoopContext)!;
+  const [menuOption, setMenuOption] = createSignal<string | null>(null);
+  const [showTimer, setShowTimer] = createSignal(false); 
 
   const time = useTime(() => timer.subtimer());
 
@@ -58,17 +64,48 @@ export function MainMenu() {
     };
   });
 
+  const handleMenuSelect = (option: string) => {
+    setMenuOption(option);
+  };
+
+  const handleCountdownEnd = () => {
+    setShowTimer(true); 
+  };
+
   return (
     <>
-      <Fractal
-        {...shape()}
-        color={rgb(-0.2, -0.1, -0.6)}
-        marbleRadius={1}
-        isPlanet={false}
-        flagPosition={vec(999, 999, 999)}
-      />
-      <HideMarble />
-      <OrbitCamera {...camera()} />
+      {menuOption() === null && 
+        <>
+          <OverlayMenu onSelect={handleMenuSelect} />
+          <Fractal
+            {...shape()}
+            color={rgb(-0.2, -0.1, -0.6)}
+            marbleRadius={1}
+            isPlanet={false}
+            flagPosition={vec(999, 999, 999)}
+          />
+          <HideMarble />
+          <OrbitCamera {...camera()} />
+        </>
+      }
+      {menuOption() === 'Play' && (
+        <>
+          {!showTimer() && <Countdown onCountdownEnd={handleCountdownEnd} />}
+          {showTimer() && <Timer />}
+          <Fractal
+            {...shape()}
+            color={rgb(-0.2, -0.1, -0.6)}
+            marbleRadius={1}
+            isPlanet={false}
+            flagPosition={vec(999, 999, 999)}
+          />
+          <HideMarble />
+          <OrbitCamera {...camera()} />
+        </>
+      )}
+      {menuOption() === 'Levels' && <div>Levels Screen</div>}
+      {menuOption() === 'Controls' && <div>Controls Screen</div>}
+      {menuOption() === 'Screensaver' && <div>Screensaver Screen</div>}
     </>
   );
 }
