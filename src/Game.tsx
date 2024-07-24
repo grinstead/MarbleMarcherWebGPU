@@ -1,5 +1,10 @@
 import { SetStoreFunction } from "solid-js/store";
-import { GameStore, KeyboardTask, ACTIVE_LEVEL_KEY } from "./GameStore.ts";
+import {
+  GameStore,
+  KeyboardTask,
+  ACTIVE_LEVEL_KEY,
+  persisted,
+} from "./GameStore.ts";
 import { GameUI } from "./GameUI.tsx";
 import { Level } from "./Level.tsx";
 import {
@@ -105,12 +110,23 @@ export function Game(props: GameProps) {
   });
 
   function handlePlay(fractal: FractalProps) {
-    const mostRecent = localStorage.getItem(ACTIVE_LEVEL_KEY);
-    const mostRecentIndex =
+    let mostRecent = persisted().mostRecentlyPlayed.get();
+    let mostRecentIndex =
       mostRecent != null ? levels.findIndex((l) => l.title === mostRecent) : -1;
 
+    if (mostRecentIndex < 0) {
+      mostRecent = levels[0].title;
+      mostRecentIndex = 0;
+    }
+
     batch(() => {
-      props.setStore("level", mostRecentIndex >= 0 ? mostRecentIndex : 0);
+      persisted().mostRecentlyPlayed.set(mostRecent);
+      const prev = persisted().results.get();
+      if (!prev[mostRecent!]) {
+        persisted().results.set({ ...prev, [mostRecent!]: {} });
+      }
+
+      props.setStore("level", mostRecentIndex);
       setPlaying(true);
       setFractal(fractal);
     });
@@ -136,13 +152,34 @@ export function Game(props: GameProps) {
                 batch(() => {
                   setFractal(state.fractal);
 
+                  const { mostRecentlyPlayed, results } = persisted();
+
+                  let resultsVal = results.get();
+
+                  const from = levels[level].title;
+                  const { bestTime } = results.get()[from] ?? {};
+                  if (bestTime == null || bestTime > state.time) {
+                    resultsVal = {
+                      ...resultsVal,
+                      [from]: { bestTime: state.time },
+                    };
+                  }
+
                   if (next < levels.length) {
+                    const to = levels[next].title;
+                    if (!resultsVal.hasOwnProperty(to)) {
+                      resultsVal = { ...resultsVal, [to]: {} };
+                    }
+
                     props.setStore("level", next);
-                    localStorage.setItem(ACTIVE_LEVEL_KEY, levels[next].title);
+                    mostRecentlyPlayed.set(to);
                   } else {
                     setPlaying(false);
                     localStorage.removeItem(ACTIVE_LEVEL_KEY);
+                    mostRecentlyPlayed.set(undefined);
                   }
+
+                  results.set(resultsVal);
                 });
               }}
               heldKeys={held}

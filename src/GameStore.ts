@@ -1,5 +1,7 @@
 import { createStore } from "solid-js/store";
 import { Docket } from "@grinstead/ambush";
+import { Persisted } from "./Persisted.ts";
+import { number, object, record, string } from "zod";
 
 export type GameLoopTypes = "step";
 
@@ -26,11 +28,40 @@ export type GameTasks = {
   render: null;
 };
 
+export type LevelResult = {
+  bestTime?: number;
+};
+
 export type GameStore = {
   level: number;
   paused: boolean;
   loop: Docket<GameTasks, GameLoopTypes>;
 };
+
+export type PersistedData = {
+  mostRecentlyPlayed: Persisted<string | undefined>;
+  results: Persisted<Record<string, LevelResult>>;
+};
+
+let _persisted: undefined | PersistedData;
+
+export function persisted() {
+  return (_persisted ??= {
+    mostRecentlyPlayed: new Persisted(
+      "mostRecentlyPlayed",
+      string().optional(),
+      (str) => str
+    ),
+    results: new Persisted(
+      "results",
+      string()
+        .optional()
+        .transform((str) => (str == null ? {} : JSON.parse(str)))
+        .pipe(record(string(), object({ bestTime: number().optional() }))),
+      JSON.stringify
+    ),
+  });
+}
 
 export function createGameStore() {
   return createStore<GameStore>({
