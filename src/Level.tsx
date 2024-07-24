@@ -367,7 +367,7 @@ function LevelGameplay(props: LevelGameplayProps) {
     <>
       <Fractal {...fractal()} />
       <GameLoop.Part step="main" work={runStep()} />
-      <Show when={time() > 1} fallback={<Countdown>Go!</Countdown>}>
+      <Show when={time() > 1} fallback={<Countdown launchSound>Go!</Countdown>}>
         <TimeCounter seconds={time()} />
       </Show>
     </>

@@ -4,13 +4,19 @@ import bounce2 from "./assets/bounce2.wav";
 import bounce3 from "./assets/bounce3.wav";
 import shatter from "./assets/shatter.wav";
 import goal from "./assets/goal.wav";
+import countDown from "./assets/count_down.wav";
+import countGo from "./assets/count_go.wav";
+
+function soundEffect(s: string) {
+  return new SoundEffect(new URL(s, import.meta.url));
+}
 
 export const sounds = {
-  bounces: [bounce1, bounce2, bounce3].map(
-    (s) => new SoundEffect(new URL(s, import.meta.url))
-  ),
-  shatter: new SoundEffect(new URL(shatter, import.meta.url)),
-  goal: new SoundEffect(new URL(goal, import.meta.url)),
+  bounces: [bounce1, bounce2, bounce3].map(soundEffect),
+  shatter: soundEffect(shatter),
+  goal: soundEffect(goal),
+  countDown: soundEffect(countDown),
+  countGo: soundEffect(countGo),
 };
 
 export const MARBLE_SOURCE = Symbol("marble");
