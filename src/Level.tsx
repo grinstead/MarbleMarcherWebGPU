@@ -57,7 +57,7 @@ const VICTORY_SECONDS = 3;
 
 export type LevelProps = {
   level: LevelData;
-  onVictory: () => void;
+  onVictory: (state: LevelEndState) => void;
   heldKeys: Set<string>;
 };
 
@@ -418,7 +418,7 @@ function arrayEqual(a: ArrayLike<any>, b: ArrayLike<any>): boolean {
 function LevelCelebration(props: {
   setMarble: Setter<Vec>;
   state: LevelEndState;
-  onVictory: () => void;
+  onVictory: (state: LevelEndState) => void;
   worldMatrix: Float32Array;
 }) {
   const gameloop = useContext(GameLoopContext)!;
@@ -439,7 +439,7 @@ function LevelCelebration(props: {
     const seconds = time();
 
     if (seconds > VICTORY_SECONDS) {
-      props.onVictory();
+      props.onVictory(props.state);
       return;
     }
 

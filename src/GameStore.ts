@@ -3,6 +3,8 @@ import { Docket } from "@grinstead/ambush";
 
 export type GameLoopTypes = "step";
 
+export const ACTIVE_LEVEL_KEY = "most_recent";
+
 export type KeyboardTask =
   | {
       type: "pressed";

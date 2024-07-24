@@ -1,5 +1,5 @@
 import { SetStoreFunction } from "solid-js/store";
-import { GameStore, KeyboardTask } from "./GameStore.ts";
+import { GameStore, KeyboardTask, ACTIVE_LEVEL_KEY } from "./GameStore.ts";
 import { GameUI } from "./GameUI.tsx";
 import { Level } from "./Level.tsx";
 import {
@@ -100,6 +100,15 @@ export function Game(props: GameProps) {
     }
   });
 
+  function handlePlay() {
+    const mostRecent = localStorage.getItem(ACTIVE_LEVEL_KEY);
+    const mostRecentIndex =
+      mostRecent != null ? levels.findIndex((l) => l.title === mostRecent) : -1;
+
+    props.setStore("level", mostRecentIndex >= 0 ? mostRecentIndex : 0);
+    setPlaying(true);
+  }
+
   return (
     <>
       <GameLoop.Part step="main" work={mainLoop()} />
@@ -107,13 +116,22 @@ export function Game(props: GameProps) {
         <Show
           keyed
           when={isPlaying() && levels[props.store.level]}
-          fallback={<MainMenu onPlay={() => setPlaying(true)} />}
+          fallback={<MainMenu onPlay={handlePlay} />}
         >
           {(level) => (
             <Level
               level={level}
               onVictory={() => {
-                props.setStore("level", (prev) => prev + 1);
+                const { level } = props.store;
+                const next = level + 1;
+
+                if (next < levels.length) {
+                  props.setStore("level", next);
+                  localStorage.setItem(ACTIVE_LEVEL_KEY, levels[next].title);
+                } else {
+                  setPlaying(false);
+                  localStorage.removeItem(ACTIVE_LEVEL_KEY);
+                }
               }}
               heldKeys={held}
             />
