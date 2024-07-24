@@ -38,6 +38,7 @@ import { MarbleCamera } from "./Camera.tsx";
 import { Marble } from "./Marble.tsx";
 import { MARBLE_SOURCE, playBounceSound, sounds } from "./hacks.ts";
 import { TimeCounter } from "./UI.tsx";
+import { Countdown } from "./Countdown.tsx";
 
 const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
 
@@ -125,7 +126,9 @@ function Level(props: InternalLevelProps) {
       <Switch>
         <Match when={time() < 3}>
           <Fractal {...props.level} />
-          <h1 class="countdown">{3 - Math.floor(time())}</h1>
+          <Show keyed when={Math.ceil(3 - time()).toString()}>
+            {(count) => <Countdown>{count}</Countdown>}
+          </Show>
         </Match>
         <Match when={!victory()}>
           <LevelGameplay
@@ -364,7 +367,9 @@ function LevelGameplay(props: LevelGameplayProps) {
     <>
       <Fractal {...fractal()} />
       <GameLoop.Part step="main" work={runStep()} />
-      <TimeCounter seconds={time()} />
+      <Show when={time() > 1} fallback={<Countdown>Go!</Countdown>}>
+        <TimeCounter seconds={time()} />
+      </Show>
     </>
   );
 }
