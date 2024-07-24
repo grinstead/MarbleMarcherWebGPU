@@ -38,13 +38,10 @@
   align-items: center;
 }
 
-.countdown {
-  color: black;
+.level-title {
+  color: white;
   font-size: 64px;
   user-select: none;
-
-  font-style: bold;
-  -webkit-text-fill-color: white;
   -webkit-text-stroke: 2px black;
 }
 

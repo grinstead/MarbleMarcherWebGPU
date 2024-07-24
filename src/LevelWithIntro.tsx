@@ -1,4 +1,4 @@
-import { createMemo, Match, Switch, useContext } from "solid-js";
+import { createMemo, Match, Show, Switch, useContext } from "solid-js";
 import { Level, LevelProps } from "./Level.tsx";
 import {
   addVec,
@@ -10,7 +10,7 @@ import {
   vec,
 } from "@grinstead/ambush";
 import { Fractal, FractalProps } from "./Fractal.tsx";
-import { HideMarble } from "./Marble.tsx";
+import { HideMarble, Marble } from "./Marble.tsx";
 import { OrbitCamera } from "./Camera.tsx";
 import { FAR_AWAY } from "./hacks.ts";
 
@@ -20,6 +20,7 @@ export type LevelWithIntroProps = LevelProps & {
 
 const ORBIT_SPEED = 0.005;
 const INTRO_START_SECONDS = 6.5;
+const INTRO_END_SECONDS = 10;
 
 export function LevelWithIntro(props: LevelWithIntroProps) {
   const gameloop = useContext(GameLoopContext)!;
@@ -80,6 +81,12 @@ export function LevelWithIntro(props: LevelWithIntroProps) {
         />
         <HideMarble />
         <OrbitCamera target={target()} offset={camera()} />
+      </Match>
+      <Match when={time() < INTRO_END_SECONDS}>
+        <Fractal {...props.level} />
+        <Marble position={props.level.marblePosition} />
+        <OrbitCamera target={target()} offset={camera()} />
+        <h1 class="level-title">{props.level.title}</h1>
       </Match>
     </Switch>
   );
