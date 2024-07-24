@@ -177,6 +177,8 @@ type LevelGameplayProps = {
 };
 
 function LevelGameplay(props: LevelGameplayProps) {
+  const engine = useGameEngine();
+
   const time = useTime(() => props.timer);
 
   const shape = createMemo(() => {
@@ -256,7 +258,7 @@ function LevelGameplay(props: LevelGameplayProps) {
       }
 
       if (maxBounce > 0) {
-        playBounceSound(maxBounce);
+        playBounceSound(engine.audio, maxBounce);
       }
 
       // add the velocity the user is inputing, but it will

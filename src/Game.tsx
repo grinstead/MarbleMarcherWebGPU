@@ -2,14 +2,23 @@ import { SetStoreFunction } from "solid-js/store";
 import { GameStore, KeyboardTask } from "./GameStore.ts";
 import { GameUI } from "./GameUI.tsx";
 import { Level } from "./Level.tsx";
-import { Show, createMemo, createSignal, untrack, useContext } from "solid-js";
+import {
+  Show,
+  createMemo,
+  createSignal,
+  onMount,
+  untrack,
+  useContext,
+} from "solid-js";
 import {
   GPUWorkQueueContext,
   GameLoop,
   GameLoopContext,
+  useGameEngine,
 } from "@grinstead/ambush";
 import { levels } from "./LevelData.ts";
 import { MainMenu } from "./MainMenu.tsx";
+import { bounceSounds } from "./hacks.ts";
 
 export type GameProps = {
   store: GameStore;
@@ -19,8 +28,14 @@ export type GameProps = {
 export function Game(props: GameProps) {
   const graphics = useContext(GPUWorkQueueContext)!;
   const gameloop = useContext(GameLoopContext)!;
+  const engine = useGameEngine();
 
   const [isPlaying, setPlaying] = createSignal(false);
+
+  onMount(() => {
+    const { audio } = engine;
+    audio.preloadAll(bounceSounds);
+  });
 
   let held = new Set<string>();
 

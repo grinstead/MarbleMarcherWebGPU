@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@grinstead/ambush": "^0.0.13",
+    "@grinstead/ambush": "^0.0.14",
     "@grinstead/classnames": "^1.0.3",
     "solid-js": "^1.8.15"
   },
