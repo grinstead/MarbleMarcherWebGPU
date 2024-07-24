@@ -1,0 +1,10 @@
+.timer {
+    position: absolute;
+    top: 20px;
+    font-size: 50px;
+    color: white;
+    font-weight: bold;
+    font-family: 'Orbitron', sans-serif;
+    text-align: center;
+  }
+  

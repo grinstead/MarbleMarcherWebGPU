@@ -1,0 +1,32 @@
+.countdown {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 64px;
+  color: white;
+  font-weight: bolder;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.fade-out {
+  animation: countdownFade 1s linear forwards, countdownSize 1s linear forwards;
+}
+
+@keyframes countdownFade {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes countdownSize {
+  0% {
+    font-size: 64px;
+  }
+  100% {
+    font-size: 84px;
+  }
+}

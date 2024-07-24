@@ -20,7 +20,7 @@ export function Game(props: GameProps) {
   const graphics = useContext(GPUWorkQueueContext)!;
   const gameloop = useContext(GameLoopContext)!;
 
-  const [isPlaying, setPlaying] = createSignal(true);
+  const [isPlaying, setPlaying] = createSignal(false);
 
   let held = new Set<string>();
 
