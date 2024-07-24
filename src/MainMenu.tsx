@@ -14,13 +14,21 @@ import {
   useTime,
   vec,
 } from "@grinstead/ambush";
+import { sounds } from "./hacks.ts";
 
 export type MainMenuProps = {
   onPlay: () => void;
 };
 
+const ButtonSource = Symbol("Button");
+
 export function MainMenu(props: MainMenuProps) {
   const engine = useGameEngine();
+
+  const playHoverSound = () => {
+    engine.audio.enable();
+    engine.audio.play(ButtonSource, sounds.menuHover);
+  };
 
   return (
     <>
@@ -29,13 +37,19 @@ export function MainMenu(props: MainMenuProps) {
         <button
           onClick={() => {
             engine.audio.enable();
+            engine.audio.play(ButtonSource, sounds.menuClick);
             props.onPlay();
           }}
+          onMouseEnter={playHoverSound}
         >
           Play
         </button>
-        <button disabled>Levels</button>
-        <button disabled>Controls</button>
+        <button onMouseEnter={playHoverSound} disabled>
+          Levels
+        </button>
+        <button onMouseEnter={playHoverSound} disabled>
+          Controls
+        </button>
       </div>
       <FractalBackground />
     </>
