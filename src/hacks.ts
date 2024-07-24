@@ -1,4 +1,4 @@
-import { AudioManager, SoundEffect } from "@grinstead/ambush";
+import { AudioManager, SoundEffect, vec } from "@grinstead/ambush";
 import bounce1 from "./assets/bounce1.wav";
 import bounce2 from "./assets/bounce2.wav";
 import bounce3 from "./assets/bounce3.wav";
@@ -8,6 +8,8 @@ import countDown from "./assets/count_down.wav";
 import countGo from "./assets/count_go.wav";
 import menuHover from "./assets/menu_hover.wav";
 import menuClick from "./assets/menu_click.wav";
+
+export const FAR_AWAY = vec(999, 999, 999);
 
 function soundEffect(s: string) {
   return new SoundEffect(new URL(s, import.meta.url));

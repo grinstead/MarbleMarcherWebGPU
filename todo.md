@@ -1,14 +1,14 @@
 Things remaining
 
 - [x] Level Failures (Crush, Too Far)
-- [ ] Sound effects
+- [x] Sound effects
 - [ ] Music
 - [ ] Level Transitions
-- [ ] Timer
+- [x] Timer
 - [x] Level End Celebration
 - [x] Planet Gravity
 - [ ] Pause on Blur
-- [ ] Opening Menu
+- [x] Opening Menu
 - [ ] Settings
   - [ ] Music on/off
   - [ ] Resolution Select

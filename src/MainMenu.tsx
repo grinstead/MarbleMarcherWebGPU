@@ -1,8 +1,13 @@
 import "./MainMenu.css";
-import { createMemo, useContext } from "solid-js";
+import {
+  createMemo,
+  createRenderEffect,
+  createSignal,
+  Signal,
+  useContext,
+} from "solid-js";
 import { OrbitCamera } from "./Camera.tsx";
-import { Fractal } from "./Fractal.tsx";
-import { FractalShape } from "./LevelData.ts";
+import { Fractal, FractalProps } from "./Fractal.tsx";
 import { HideMarble } from "./Marble.tsx";
 import {
   addVec,
@@ -18,13 +23,15 @@ import { sounds } from "./hacks.ts";
 import firstLevel from "./assets/level1.ogg";
 
 export type MainMenuProps = {
-  onPlay: () => void;
+  onPlay: (fromFractal: FractalProps) => void;
 };
 
 const ButtonSource = Symbol("Button");
 
 export function MainMenu(props: MainMenuProps) {
   const { audio } = useGameEngine();
+
+  const fractal = createSignal<FractalProps>(genericFractal());
 
   const playHoverSound = () => {
     audio.enable();
@@ -40,7 +47,7 @@ export function MainMenu(props: MainMenuProps) {
             audio.enable();
             audio.play(ButtonSource, sounds.menuClick);
             audio.setMusic(firstLevel);
-            props.onPlay();
+            props.onPlay(fractal[0]());
           }}
           onMouseEnter={playHoverSound}
         >
@@ -53,29 +60,17 @@ export function MainMenu(props: MainMenuProps) {
           Controls
         </button> */}
       </div>
-      <FractalBackground />
+      <FractalBackground fractal={fractal} />
     </>
   );
 }
 
-function FractalBackground() {
+function FractalBackground(props: { fractal: Signal<FractalProps> }) {
   const { timer } = useContext(GameLoopContext)!;
   const time = useTime(() => timer.subtimer());
 
-  const shape = createMemo<FractalShape>(() => {
-    // set time to a theoretical frame to match original marble marcher
-    const t = time() * 60;
-
-    return {
-      scale: 1.6,
-      angle1: 2 + 0.5 * Math.cos(t * 0.0021),
-      angle2: Math.PI + 0.5 * Math.cos(t * 0.000287),
-      offset: vec(
-        -4 + 0.5 * Math.sin(t * 0.00161),
-        -1 + 0.2 * Math.sin(t * 0.00123),
-        -1 + 0.1 * Math.cos(t * 0.00137)
-      ),
-    };
+  createRenderEffect(() => {
+    props.fractal[1](genericFractal(time() * 60));
   });
 
   const camera = createMemo<Props<typeof OrbitCamera>>(() => {
@@ -98,15 +93,30 @@ function FractalBackground() {
 
   return (
     <>
-      <Fractal
-        {...shape()}
-        color={rgb(-0.2, -0.1, -0.6)}
-        marbleRadius={1}
-        isPlanet={false}
-        flagPosition={vec(999, 999, 999)}
-      />
+      <Fractal {...props.fractal[0]()} />
       <HideMarble />
       <OrbitCamera {...camera()} />
     </>
   );
+}
+
+const GENERIC_FRACTAL = {
+  color: rgb(-0.2, -0.1, -0.6),
+  marbleRadius: 1,
+  isPlanet: false,
+  flagPosition: vec(999, 999, 999),
+};
+
+export function genericFractal(frame: number = 0): FractalProps {
+  return {
+    ...GENERIC_FRACTAL,
+    scale: 1.6,
+    angle1: 2 + 0.5 * Math.cos(frame * 0.0021),
+    angle2: Math.PI + 0.5 * Math.cos(frame * 0.000287),
+    offset: vec(
+      -4 + 0.5 * Math.sin(frame * 0.00161),
+      -1 + 0.2 * Math.sin(frame * 0.00123),
+      -1 + 0.1 * Math.cos(frame * 0.00137)
+    ),
+  };
 }

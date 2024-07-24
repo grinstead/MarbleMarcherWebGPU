@@ -4,6 +4,7 @@ import { GameUI } from "./GameUI.tsx";
 import { Level } from "./Level.tsx";
 import {
   Show,
+  batch,
   createMemo,
   createSignal,
   onMount,
@@ -17,8 +18,10 @@ import {
   useGameEngine,
 } from "@grinstead/ambush";
 import { levels } from "./LevelData.ts";
-import { MainMenu } from "./MainMenu.tsx";
+import { genericFractal, MainMenu } from "./MainMenu.tsx";
 import { sounds } from "./hacks.ts";
+import { LevelWithIntro } from "./LevelWithIntro.tsx";
+import { FractalProps } from "./Fractal.tsx";
 
 export type GameProps = {
   store: GameStore;
@@ -30,6 +33,7 @@ export function Game(props: GameProps) {
   const gameloop = useContext(GameLoopContext)!;
   const engine = useGameEngine();
 
+  const [fractal, setFractal] = createSignal<FractalProps>(genericFractal());
   const [isPlaying, setPlaying] = createSignal(false);
 
   onMount(() => {
@@ -100,13 +104,16 @@ export function Game(props: GameProps) {
     }
   });
 
-  function handlePlay() {
+  function handlePlay(fractal: FractalProps) {
     const mostRecent = localStorage.getItem(ACTIVE_LEVEL_KEY);
     const mostRecentIndex =
       mostRecent != null ? levels.findIndex((l) => l.title === mostRecent) : -1;
 
-    props.setStore("level", mostRecentIndex >= 0 ? mostRecentIndex : 0);
-    setPlaying(true);
+    batch(() => {
+      props.setStore("level", mostRecentIndex >= 0 ? mostRecentIndex : 0);
+      setPlaying(true);
+      setFractal(fractal);
+    });
   }
 
   return (
@@ -119,19 +126,24 @@ export function Game(props: GameProps) {
           fallback={<MainMenu onPlay={handlePlay} />}
         >
           {(level) => (
-            <Level
+            <LevelWithIntro
+              from={fractal()}
               level={level}
-              onVictory={() => {
+              onVictory={(state) => {
                 const { level } = props.store;
                 const next = level + 1;
 
-                if (next < levels.length) {
-                  props.setStore("level", next);
-                  localStorage.setItem(ACTIVE_LEVEL_KEY, levels[next].title);
-                } else {
-                  setPlaying(false);
-                  localStorage.removeItem(ACTIVE_LEVEL_KEY);
-                }
+                batch(() => {
+                  setFractal(state.fractal);
+
+                  if (next < levels.length) {
+                    props.setStore("level", next);
+                    localStorage.setItem(ACTIVE_LEVEL_KEY, levels[next].title);
+                  } else {
+                    setPlaying(false);
+                    localStorage.removeItem(ACTIVE_LEVEL_KEY);
+                  }
+                });
               }}
               heldKeys={held}
             />
