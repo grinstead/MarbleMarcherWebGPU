@@ -7,6 +7,7 @@
   color: white;
   font-weight: bolder;
   font-family: "Orbitron", sans-serif;
+  user-select: none;
   -webkit-text-stroke: 2px black;
 }
 
