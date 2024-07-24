@@ -12,17 +12,35 @@ export class Persisted<T> extends EventTarget {
   ) {
     super();
 
-    const encoded = localStorage.getItem(key) ?? undefined;
-    this._v = validator.parse(encoded);
+    let encoded = localStorage.getItem(key) ?? undefined;
+    let value;
+
+    const parsed = validator.safeParse(encoded);
+    if (parsed.success) {
+      value = parsed.data;
+    } else {
+      console.error(`Error parsing ${key}`, parsed.error.format());
+      encoded = undefined;
+      value = validator.parse(undefined);
+    }
+
     this._e = encoded;
+    this._v = value;
 
     const loadFromStorage = () => {
       const encoded = localStorage.getItem(key) ?? undefined;
       if (this._e === encoded) return;
 
-      if (this._e) {
-        this._v = validator.parse(encoded);
+      const parsed = validator.safeParse(encoded);
+      if (parsed.success) {
+        this._v = parsed.data;
         this._e = encoded;
+      } else {
+        console.error(`Error parsing ${key}`, parsed.error.format());
+        if (this._e !== undefined) {
+          this._v = validator.parse(undefined);
+          this._e = undefined;
+        }
       }
     };
 
