@@ -32,7 +32,7 @@ export type GameStore = {
 
 export function createGameStore() {
   return createStore<GameStore>({
-    level: 4,
+    level: 0,
     paused: true,
     loop: new Docket<GameTasks, GameLoopTypes>({
       input: { events: ["step"] },

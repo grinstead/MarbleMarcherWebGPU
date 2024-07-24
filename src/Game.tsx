@@ -107,7 +107,7 @@ export function Game(props: GameProps) {
         <Show
           keyed
           when={isPlaying() && levels[props.store.level]}
-          fallback={<MainMenu />}
+          fallback={<MainMenu onPlay={() => setPlaying(true)} />}
         >
           {(level) => (
             <Level
