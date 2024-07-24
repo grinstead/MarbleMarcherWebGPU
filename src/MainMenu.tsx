@@ -15,6 +15,7 @@ import {
   vec,
 } from "@grinstead/ambush";
 import { sounds } from "./hacks.ts";
+import firstLevel from "./assets/level1.ogg";
 
 export type MainMenuProps = {
   onPlay: () => void;
@@ -23,11 +24,11 @@ export type MainMenuProps = {
 const ButtonSource = Symbol("Button");
 
 export function MainMenu(props: MainMenuProps) {
-  const engine = useGameEngine();
+  const { audio } = useGameEngine();
 
   const playHoverSound = () => {
-    engine.audio.enable();
-    engine.audio.play(ButtonSource, sounds.menuHover);
+    audio.enable();
+    audio.play(ButtonSource, sounds.menuHover);
   };
 
   return (
@@ -36,8 +37,9 @@ export function MainMenu(props: MainMenuProps) {
         <div class="title">Marble Marcher</div>
         <button
           onClick={() => {
-            engine.audio.enable();
-            engine.audio.play(ButtonSource, sounds.menuClick);
+            audio.enable();
+            audio.play(ButtonSource, sounds.menuClick);
+            audio.setMusic(firstLevel);
             props.onPlay();
           }}
           onMouseEnter={playHoverSound}
