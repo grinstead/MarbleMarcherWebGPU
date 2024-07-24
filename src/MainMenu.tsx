@@ -46,12 +46,12 @@ export function MainMenu(props: MainMenuProps) {
         >
           Play
         </button>
-        <button onMouseEnter={playHoverSound} disabled>
+        {/* <button onMouseEnter={playHoverSound} disabled>
           Levels
         </button>
         <button onMouseEnter={playHoverSound} disabled>
           Controls
-        </button>
+        </button> */}
       </div>
       <FractalBackground />
     </>
