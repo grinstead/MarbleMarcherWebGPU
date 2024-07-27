@@ -1,9 +1,10 @@
+import { classnames } from "@grinstead/classnames";
 import { createMemo, For, Show } from "solid-js";
 
-export function TimeCounter(props: { seconds: number }) {
+export function TimeCounter(props: { seconds: number; isRecord?: boolean }) {
   const minutes = createMemo(() => Math.floor(props.seconds / 60));
   return (
-    <h2 class="timer">
+    <h2 class={classnames("timer", props.isRecord && "victory")}>
       <Show
         when={minutes() >= 100}
         fallback={<DoubleDigit value={minutes()} />}

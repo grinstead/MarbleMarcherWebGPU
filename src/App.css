@@ -57,6 +57,10 @@
   -webkit-text-stroke: 1px black;
 }
 
+.timer.victory {
+  color: lightgreen;
+}
+
 .timer > span {
   display: inline-block;
   text-align: center;

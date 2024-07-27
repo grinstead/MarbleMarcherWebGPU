@@ -39,6 +39,8 @@ import { Marble } from "./Marble.tsx";
 import { MARBLE_SOURCE, playBounceSound, sounds } from "./hacks.ts";
 import { TimeCounter } from "./UI.tsx";
 import { Countdown } from "./Countdown.tsx";
+import { usePersisted } from "./Persisted.ts";
+import { persisted } from "./GameStore.ts";
 
 const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
 
@@ -62,6 +64,7 @@ export type LevelProps = {
 };
 
 export type LevelEndState = {
+  title: string;
   time: number;
   endVelocity: Vec;
   endPosition: Vec;
@@ -282,6 +285,7 @@ function LevelGameplay(props: LevelGameplayProps) {
       if (isFinished()) {
         engine.audio.play(null, sounds.goal);
         props.onVictory({
+          title: props.level.title,
           time: timer.time,
           endVelocity: v,
           endPosition: p,
@@ -423,6 +427,12 @@ function LevelCelebration(props: {
 }) {
   const gameloop = useContext(GameLoopContext)!;
   const time = useTime(() => gameloop.timer.subtimer());
+  const levelResults = usePersisted(persisted().results);
+
+  const isRecord = createMemo(() => {
+    const best = levelResults()[props.state.title]?.bestTime;
+    return best == null || props.state.time <= best;
+  });
 
   let originalMarble: undefined | Vec;
 
@@ -430,7 +440,7 @@ function LevelCelebration(props: {
     <>
       <Fractal {...props.state.fractal} />
       <GameLoop.Part step="main" work={runStep} />
-      <TimeCounter seconds={props.state.time} />
+      <TimeCounter seconds={props.state.time} isRecord={isRecord()} />
     </>
   );
 
@@ -461,21 +471,4 @@ function LevelCelebration(props: {
       return addVec(scale(pos, 1 - percentage), scale(target, percentage));
     });
   }
-}
-
-export function timerText(seconds: number) {
-  const minutes = Math.floor(seconds / 60);
-  const fullSeconds = Math.floor(seconds) % 60;
-  const centaseconds = Math.floor((seconds - Math.floor(seconds)) * 100);
-
-  return `${minLengthDigits(2, minutes)}:${minLengthDigits(
-    2,
-    fullSeconds
-  )}.${minLengthDigits(2, centaseconds)}`;
-}
-
-export function minLengthDigits(minLength: number, value: number) {
-  const str = String(value);
-  const needs = minLength - str.length;
-  return needs > 0 ? `${"0".repeat(needs)}${str}` : str;
 }
