@@ -1,4 +1,4 @@
-import { createMemo, Match, Show, Switch, useContext } from "solid-js";
+import { createMemo, Match, onMount, Show, Switch, useContext } from "solid-js";
 import { Level, LevelProps } from "./Level.tsx";
 import {
   addVec,
@@ -6,13 +6,15 @@ import {
   lerp,
   rgb,
   scale,
+  useGameEngine,
   useTime,
   vec,
 } from "@grinstead/ambush";
 import { Fractal, FractalProps } from "./Fractal.tsx";
 import { HideMarble, Marble } from "./Marble.tsx";
 import { OrbitCamera } from "./Camera.tsx";
-import { FAR_AWAY } from "./hacks.ts";
+import { FAR_AWAY, playMusic } from "./hacks.ts";
+import { levels } from "./LevelData.ts";
 
 export type LevelWithIntroProps = LevelProps & {
   from: FractalProps;
@@ -24,6 +26,15 @@ const INTRO_END_SECONDS = 10;
 
 export function LevelWithIntro(props: LevelWithIntroProps) {
   const gameloop = useContext(GameLoopContext)!;
+  const { audio } = useGameEngine();
+
+  onMount(() => {
+    const { title } = props.level;
+    playMusic(
+      audio,
+      levels.findIndex((l) => l.title === title)
+    );
+  });
 
   const time = useTime(() => gameloop.timer.subtimer());
 

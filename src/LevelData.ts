@@ -20,6 +20,8 @@ export type LevelData = FractalShape & {
   animation: Vec;
 };
 
+export const MUSIC_SWITCHES = [9, 15, 21, 24];
+
 export const levels: Array<LevelData> = [
   {
     scale: 1.8,

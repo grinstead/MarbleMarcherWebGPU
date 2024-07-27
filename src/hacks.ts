@@ -8,6 +8,14 @@ import countDown from "./assets/count_down.wav";
 import countGo from "./assets/count_go.wav";
 import menuHover from "./assets/menu_hover.wav";
 import menuClick from "./assets/menu_click.wav";
+import { MUSIC_SWITCHES } from "./LevelData.ts";
+
+import level1_ogg from "./assets/level1.ogg";
+import level2_ogg from "./assets/level2.ogg";
+import level3_ogg from "./assets/level3.ogg";
+import level4_ogg from "./assets/level4.ogg";
+
+const SOUNDTRACKS = [level1_ogg, level2_ogg, level3_ogg, level4_ogg];
 
 export const FAR_AWAY = vec(999, 999, 999);
 
@@ -35,4 +43,21 @@ export function playBounceSound(audio: AudioManager, deltaV: number) {
   } else if (deltaV > 0.05) {
     audio.play(MARBLE_SOURCE, sounds.bounces[2], deltaV / 0.25);
   }
+}
+
+let currentSoundtrack: undefined | string;
+
+export function playMusic(audio: AudioManager, level: number) {
+  let musicIndex = 0;
+  MUSIC_SWITCHES.forEach((l, i) => {
+    if (l <= level) musicIndex = i + 1;
+  });
+
+  const uri = SOUNDTRACKS[musicIndex % SOUNDTRACKS.length];
+
+  // todo: fix in ambush engine
+  if (uri === currentSoundtrack) return;
+
+  currentSoundtrack = uri;
+  audio.setMusic(uri);
 }

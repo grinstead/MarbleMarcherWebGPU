@@ -19,7 +19,7 @@ import {
   useTime,
   vec,
 } from "@grinstead/ambush";
-import { sounds } from "./hacks.ts";
+import { playMusic, sounds } from "./hacks.ts";
 import firstLevel from "./assets/level1.ogg";
 
 export type MainMenuProps = {
@@ -46,7 +46,6 @@ export function MainMenu(props: MainMenuProps) {
           onClick={() => {
             audio.enable();
             audio.play(ButtonSource, sounds.menuClick);
-            audio.setMusic(firstLevel);
             props.onPlay(fractal[0]());
           }}
           onMouseEnter={playHoverSound}
