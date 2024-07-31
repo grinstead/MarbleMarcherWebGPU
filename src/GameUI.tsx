@@ -9,13 +9,16 @@ export type GameUIProps = {
 };
 
 export function GameUI(props: GameUIProps) {
+  let div: undefined | HTMLDivElement;
+
   const { timer } = useGameEngine().loop;
 
   return (
     <div
-      ref={(div) => {
+      ref={(div_) => {
+        div = div_;
         requestAnimationFrame(() => {
-          div.focus();
+          div_.focus();
         });
       }}
       tabIndex={1}
@@ -32,6 +35,9 @@ export function GameUI(props: GameUIProps) {
       onblur={() => {
         timer.pause();
         props.store.loop.add.input({ type: "blur" });
+        requestAnimationFrame(() => {
+          div?.focus();
+        });
       }}
       class={classnames("overlay", props.store.paused && "paused")}
     >

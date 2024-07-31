@@ -25,6 +25,10 @@
   font-family: "Orbitron", sans-serif;
 }
 
+.game:focus {
+  outline: none;
+}
+
 .overlay {
   position: absolute;
   border: 1px solid white;

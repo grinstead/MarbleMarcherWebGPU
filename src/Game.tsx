@@ -12,7 +12,6 @@ import {
   createMemo,
   createSignal,
   onMount,
-  untrack,
   useContext,
 } from "solid-js";
 import {
@@ -34,7 +33,6 @@ export type GameProps = {
 
 export function Game(props: GameProps) {
   const graphics = useContext(GPUWorkQueueContext)!;
-  const gameloop = useContext(GameLoopContext)!;
   const engine = useGameEngine();
 
   const [fractal, setFractal] = createSignal<FractalProps>(genericFractal());
@@ -56,7 +54,6 @@ export function Game(props: GameProps) {
   const mainLoop = createMemo(() => {
     const { store, setStore } = props;
     const { loop } = store;
-    const { timer } = gameloop;
 
     return renderLoopStep;
 
@@ -101,10 +98,6 @@ export function Game(props: GameProps) {
 
     function renderLoopStep() {
       runEvents();
-
-      // if (untrack(() => store.paused)) {
-      //   timer.pause();
-      // }
     }
   });
 
