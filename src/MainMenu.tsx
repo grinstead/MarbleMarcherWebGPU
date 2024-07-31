@@ -3,6 +3,7 @@ import {
   createMemo,
   createRenderEffect,
   createSignal,
+  onMount,
   Signal,
   useContext,
 } from "solid-js";
@@ -27,7 +28,11 @@ export type MainMenuProps = {
 const ButtonSource = Symbol("Button");
 
 export function MainMenu(props: MainMenuProps) {
-  const { audio } = useGameEngine();
+  const { audio, loop } = useGameEngine();
+
+  onMount(() => {
+    loop.timer.unpause();
+  });
 
   const fractal = createSignal<FractalProps>(genericFractal());
 

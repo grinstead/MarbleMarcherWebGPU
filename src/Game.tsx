@@ -102,9 +102,9 @@ export function Game(props: GameProps) {
     function renderLoopStep() {
       runEvents();
 
-      if (untrack(() => store.paused)) {
-        timer.pause();
-      }
+      // if (untrack(() => store.paused)) {
+      //   timer.pause();
+      // }
     }
   });
 
