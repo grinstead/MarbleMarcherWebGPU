@@ -1,12 +1,4 @@
-import {
-  BufferBinding,
-  VEC_Y,
-  VEC_Z,
-  Vec,
-  addVec,
-  scale,
-  xyzArray,
-} from "@grinstead/ambush";
+import { BufferBinding, VEC_Y, VEC_Z, Vec3, scale } from "@grinstead/ambush";
 import {
   IDENTITY,
   MatrixBinary,
@@ -18,8 +10,8 @@ import { createMemo } from "solid-js";
 export type MarbleCameraProps = {
   marbleRadius: number;
   worldMatrix: Float32Array;
-  marble: Vec;
-  offset: Vec;
+  marble: Vec3;
+  offset: Vec3;
 };
 
 export function MarbleCamera(props: MarbleCameraProps) {
@@ -36,12 +28,12 @@ export function MarbleCamera(props: MarbleCameraProps) {
 
     const distance = marbleRadius * offset.z;
 
-    let pos = props.marble;
-    pos = addVec(pos, scale(binary.multVec(VEC_Z), distance));
-    pos = addVec(pos, scale(binary.multVec(VEC_Y), distance * 0.1));
+    let pos = props.marble
+      .plus(scale(binary.multVec(VEC_Z), distance))
+      .plus(scale(binary.multVec(VEC_Y), distance * 0.1));
 
     // set the translation col to xyz position
-    mat.set(xyzArray(pos), 12);
+    mat.set(pos.xyz(), 12);
 
     return mat;
   });
@@ -49,7 +41,7 @@ export function MarbleCamera(props: MarbleCameraProps) {
   return <FreeCamera matrix={matrix()} />;
 }
 
-export function OrbitCamera(props: { target: Vec; offset: Vec }) {
+export function OrbitCamera(props: { target: Vec3; offset: Vec3 }) {
   return (
     <MarbleCamera
       marble={props.target}

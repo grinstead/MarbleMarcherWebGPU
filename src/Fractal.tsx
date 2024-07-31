@@ -1,10 +1,9 @@
 import {
   ScalarBinding,
-  Vec,
+  Vec3,
   VectorBinding,
   rgbArray,
-  vec,
-  xyzArray,
+  vec3,
 } from "@grinstead/ambush";
 import { FractalShape, LevelData } from "./LevelData.ts";
 
@@ -31,7 +30,7 @@ export function Fractal(props: FractalProps) {
         label="iFracShift"
         group={0}
         id={6}
-        value={xyzArray(props.offset)}
+        value={props.offset.xyz()}
       />
       <VectorBinding
         label="iFracCol"
@@ -55,7 +54,7 @@ export function Fractal(props: FractalProps) {
         label="iFlagPos"
         group={0}
         id={11}
-        value={xyzArray(props.flagPosition)}
+        value={props.flagPosition.xyz()}
       />
     </>
   );
@@ -71,7 +70,7 @@ function sinCosTanAngle(angle: number): [number, number, number, number] {
 const pointStack: Array<number> = [];
 const FRACTAL_ITERS = 16;
 
-export function nearestPoint(fractal: FractalShape, original: Vec) {
+export function nearestPoint(fractal: FractalShape, original: Vec3) {
   let { x, y, z } = original;
 
   const { scale, offset } = fractal;
@@ -166,7 +165,7 @@ export function nearestPoint(fractal: FractalShape, original: Vec) {
     if (z < 0) nz = -nz;
   }
 
-  return vec(nx, ny, nz);
+  return vec3(nx, ny, nz);
 }
 
 function clamp(x: number, min: number, max: number) {

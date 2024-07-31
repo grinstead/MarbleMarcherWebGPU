@@ -6,7 +6,6 @@ import {
   persisted,
 } from "./GameStore.ts";
 import { GameUI } from "./GameUI.tsx";
-import { Level } from "./Level.tsx";
 import {
   Show,
   batch,

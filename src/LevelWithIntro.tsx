@@ -1,14 +1,14 @@
-import { createMemo, Match, onMount, Show, Switch, useContext } from "solid-js";
+import { createMemo, Match, onMount, Switch, useContext } from "solid-js";
 import { Level, LevelProps } from "./Level.tsx";
 import {
-  addVec,
   GameLoopContext,
   lerp,
   rgb,
   scale,
   useGameEngine,
   useTime,
-  vec,
+  vec2,
+  vec3,
 } from "@grinstead/ambush";
 import { Fractal, FractalProps } from "./Fractal.tsx";
 import { HideMarble, Marble } from "./Marble.tsx";
@@ -47,18 +47,18 @@ export function LevelWithIntro(props: LevelWithIntroProps) {
     const { orbitDistance } = props.level;
 
     const t = time() * 60 * ORBIT_SPEED;
-    const perp = vec(Math.sin(t), 0, Math.cos(t));
+    const perp = vec3(Math.sin(t), 0, Math.cos(t));
 
-    const orbit = vec(0, orbitDistance, 0);
+    const orbit = vec3(0, orbitDistance, 0);
 
-    return addVec(orbit, scale(perp, orbitDistance * 2.5));
+    return orbit.plus(scale(perp, orbitDistance * 2.5));
   });
 
   const camera = createMemo(() => {
     const { x, z } = target();
     const angle = Math.atan2(x, z);
 
-    return vec(angle, -0.3);
+    return vec2(angle, -0.3);
   });
 
   return (
@@ -76,7 +76,7 @@ export function LevelWithIntro(props: LevelWithIntroProps) {
             props.level.angle2,
             smoothstep()
           )}
-          offset={vec(
+          offset={vec3(
             lerp(props.from.offset.x, props.level.offset.x, smoothstep()),
             lerp(props.from.offset.y, props.level.offset.y, smoothstep()),
             lerp(props.from.offset.z, props.level.offset.z, smoothstep())

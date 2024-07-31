@@ -6,19 +6,14 @@ import {
   VEC_X,
   VEC_Y,
   VEC_ZERO,
-  Vec,
-  addVec,
-  cross,
-  dot,
+  Vec3,
   magnitude,
   normalize,
   rescale,
   scale,
-  subtractVec,
   useGameEngine,
   useTime,
-  vec,
-  vecEqual,
+  vec3,
 } from "@grinstead/ambush";
 import { Fractal, FractalProps, nearestPoint } from "./Fractal.tsx";
 import { LevelData } from "./LevelData.ts";
@@ -66,8 +61,8 @@ export type LevelProps = {
 export type LevelEndState = {
   title: string;
   time: number;
-  endVelocity: Vec;
-  endPosition: Vec;
+  endVelocity: Vec3;
+  endPosition: Vec3;
   fractal: FractalProps;
 };
 
@@ -102,15 +97,14 @@ function Level(props: InternalLevelProps) {
   const { mouse } = useGameEngine();
   const time = useTime(() => props.timer);
 
-  const start = props.level.marblePosition;
-  const [marble, setMarble] = createSignal(vec(start.x, start.y, start.z), {
-    equals: vecEqual,
+  const [marble, setMarble] = createSignal(props.level.marblePosition.clone(), {
+    equals: Vec3.equals,
   });
 
   const [cameraOffset, setCameraOffset] = createSignal(
-    vec(props.level.startLookDirection, -0.3, 15),
+    vec3(props.level.startLookDirection, -0.3, 15),
     {
-      equals: vecEqual,
+      equals: Vec3.equals,
     }
   );
 
@@ -173,11 +167,11 @@ function animate(base: number, anim: number, time: Accessor<number>) {
 type LevelGameplayProps = {
   level: LevelData;
   timer: FrameTimer;
-  marble: Vec;
+  marble: Vec3;
   onVictory: (state: LevelEndState) => void;
-  setMarble: Setter<Vec>;
+  setMarble: Setter<Vec3>;
   setWorldMatrix: Setter<Float32Array>;
-  cameraOffset: Vec;
+  cameraOffset: Vec3;
   heldKeys: Set<string>;
   onReset: () => void;
 };
@@ -195,7 +189,7 @@ function LevelGameplay(props: LevelGameplayProps) {
       scale: level.scale,
       angle1: animate(level.angle1, animation.x, time),
       angle2: animate(level.angle2, animation.y, time),
-      offset: vec(offset.x, animate(offset.y, animation.z, time), offset.z),
+      offset: vec3(offset.x, animate(offset.y, animation.z, time), offset.z),
     };
   });
 
@@ -228,8 +222,8 @@ function LevelGameplay(props: LevelGameplayProps) {
 
       if (props.level.isPlanet) {
         const yAxis = normalize(p) ?? VEC_Y;
-        const zAxis = rescale(cross(yAxis, worldMatrix.multVec(VEC_X)), -1)!;
-        const xAxis = rescale(cross(zAxis, yAxis), -1)!;
+        const zAxis = rescale(yAxis.cross(worldMatrix.multVec(VEC_X)), -1)!;
+        const xAxis = rescale(zAxis.cross(yAxis), -1)!;
 
         // prettier-ignore
         worldMatrix.set(new Float32Array([
@@ -261,7 +255,7 @@ function LevelGameplay(props: LevelGameplayProps) {
         } else if (result === true) {
           onGround = true;
         }
-        p = addVec(p, scale(v, deltaTime / NUM_PHYSICS_STEPS));
+        p = p.plus(scale(v, deltaTime / NUM_PHYSICS_STEPS));
       }
 
       if (maxBounce > 0) {
@@ -296,9 +290,9 @@ function LevelGameplay(props: LevelGameplayProps) {
 
     function gravity() {
       let f = marbleRadius * (GRAVITY / NUM_PHYSICS_STEPS);
-      let g = (props.level.isPlanet && normalize(p)) || vec(0, 1, 0);
+      let g = (props.level.isPlanet && normalize(p)) || VEC_Y;
 
-      v = subtractVec(v, scale(g, f * deltaTime));
+      v = v.minus(scale(g, f * deltaTime));
     }
 
     /**
@@ -307,7 +301,7 @@ function LevelGameplay(props: LevelGameplayProps) {
      */
     function collision(): boolean | number | "crushed" {
       const nearest = nearestPoint(shape(), p);
-      const delta = subtractVec(nearest, p);
+      const delta = p.to(nearest);
       const distance = magnitude(delta);
 
       if (distance < marbleRadius * 0.001) {
@@ -321,9 +315,9 @@ function LevelGameplay(props: LevelGameplayProps) {
 
       const direction = scale(delta, 1 / distance);
 
-      let dv = dot(v, direction);
-      p = subtractVec(p, subtractVec(scale(direction, marbleRadius), delta));
-      v = subtractVec(v, scale(direction, dv * MARBLE_BOUNCE));
+      let dv = v.dot(direction);
+      p = p.minus(scale(direction, marbleRadius).minus(delta));
+      v = v.minus(scale(direction, dv * MARBLE_BOUNCE));
 
       return dv;
     }
@@ -332,7 +326,7 @@ function LevelGameplay(props: LevelGameplayProps) {
       const cameraMatrix = new MatrixBinary();
       rotateAboutY(cameraMatrix, props.cameraOffset.x);
 
-      let dMarble = vec(
+      let dMarble = vec3(
         (heldKeys.has("d") ? 1 : 0) - (heldKeys.has("a") ? 1 : 0),
         0,
         (heldKeys.has("s") ? 1 : 0) - (heldKeys.has("w") ? 1 : 0)
@@ -344,8 +338,7 @@ function LevelGameplay(props: LevelGameplayProps) {
       // orient to the planet
       dMarble = worldMatrix.multVec(dMarble);
 
-      v = addVec(
-        v,
+      v = v.plus(
         scale(
           dMarble,
           (onGround ? GROUND_FORCE : AIR_FORCE) * marbleRadius * deltaTime
@@ -380,9 +373,9 @@ function LevelGameplay(props: LevelGameplayProps) {
 
 function MouseTracking(props: {
   mouse: MouseAccessors;
-  setCameraOffset: Setter<Vec>;
+  setCameraOffset: Setter<Vec3>;
 }): undefined {
-  createComputed<Vec | undefined>((prev) => {
+  createComputed<Vec3 | undefined>((prev) => {
     const data = props.mouse;
 
     // drop tracking data if the mouse button is not pressed
@@ -391,16 +384,16 @@ function MouseTracking(props: {
     const m = data.pos();
     if (!prev) return m;
 
-    const diff = scale(subtractVec(m, prev), 1 / 320);
+    const diff = scale(m.minus(prev), 1 / 320);
 
     props.setCameraOffset((camera) => {
-      let { x, y } = subtractVec(camera, diff);
+      let { x, y } = camera.minus(diff);
       while (x > Math.PI) x -= 2 * Math.PI;
       while (x < Math.PI) x += 2 * Math.PI;
 
       y = Math.min(Math.max(y, -Math.PI / 2), Math.PI / 2);
 
-      return vec(x, y, camera.z);
+      return vec3(x, y, camera.z);
     });
 
     return m;
@@ -420,7 +413,7 @@ function arrayEqual(a: ArrayLike<any>, b: ArrayLike<any>): boolean {
 }
 
 function LevelCelebration(props: {
-  setMarble: Setter<Vec>;
+  setMarble: Setter<Vec3>;
   state: LevelEndState;
   onVictory: (state: LevelEndState) => void;
   worldMatrix: Float32Array;
@@ -434,7 +427,7 @@ function LevelCelebration(props: {
     return best == null || props.state.time <= best;
   });
 
-  let originalMarble: undefined | Vec;
+  let originalMarble: undefined | Vec3;
 
   return (
     <>
@@ -456,19 +449,17 @@ function LevelCelebration(props: {
     let percentage = Math.min(seconds / (0.6 * VICTORY_SECONDS), 1);
 
     let height = 7.5 + Math.sin(seconds * 5);
-    let target = vec(0, fractal.marbleRadius * height, 0);
-    target = new MatrixBinary(props.worldMatrix).multVec(target);
-    target = addVec(fractal.flagPosition, target);
+    let target = scale(VEC_Y, fractal.marbleRadius * height);
+    target = new MatrixBinary(props.worldMatrix)
+      .multVec(target)
+      .plus(fractal.flagPosition);
 
     props.setMarble((prev) => {
       originalMarble ??= prev;
 
-      const pos = addVec(
-        originalMarble,
-        scale(props.state.endVelocity, seconds)
-      );
+      const pos = originalMarble.plus(scale(props.state.endVelocity, seconds));
 
-      return addVec(scale(pos, 1 - percentage), scale(target, percentage));
+      return scale(pos, 1 - percentage).plus(scale(target, percentage));
     });
   }
 }

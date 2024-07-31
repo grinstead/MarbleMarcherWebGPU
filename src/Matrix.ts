@@ -1,4 +1,4 @@
-import { Vec, vec } from "@grinstead/ambush";
+import { vec3, Vec3 } from "@grinstead/ambush";
 
 const SCRATCH_MATRIX = new Float32Array(16);
 const SCRATCH_RESULT = new Float32Array(16);
@@ -34,11 +34,10 @@ export class MatrixBinary {
     colMajor.set(SCRATCH_RESULT);
   }
 
-  multVec(p: Vec) {
+  multVec({ x, y, z }: Vec3) {
     const mat = this.columnMajor;
-    const { x, y, z } = p;
 
-    return vec(
+    return vec3(
       x * mat[0] + y * mat[4] + z * mat[8],
       x * mat[1] + y * mat[5] + z * mat[9],
       x * mat[2] + y * mat[6] + z * mat[10]

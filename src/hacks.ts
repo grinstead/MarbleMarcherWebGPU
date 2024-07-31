@@ -1,4 +1,4 @@
-import { AudioManager, SoundEffect, vec } from "@grinstead/ambush";
+import { AudioManager, SoundEffect, vec3 } from "@grinstead/ambush";
 import bounce1 from "./assets/bounce1.wav";
 import bounce2 from "./assets/bounce2.wav";
 import bounce3 from "./assets/bounce3.wav";
@@ -17,7 +17,7 @@ import level4_ogg from "./assets/level4.ogg";
 
 const SOUNDTRACKS = [level1_ogg, level2_ogg, level3_ogg, level4_ogg];
 
-export const FAR_AWAY = vec(999, 999, 999);
+export const FAR_AWAY = vec3(999, 999, 999);
 
 function soundEffect(s: string) {
   return new SoundEffect(new URL(s, import.meta.url));
