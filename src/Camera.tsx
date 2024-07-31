@@ -1,4 +1,11 @@
-import { BufferBinding, VEC_Y, VEC_Z, Vec3, scale } from "@grinstead/ambush";
+import {
+  BufferBinding,
+  VEC_Y,
+  VEC_Z,
+  Vec3,
+  scale,
+  vec3,
+} from "@grinstead/ambush";
 import {
   IDENTITY,
   MatrixBinary,
@@ -41,17 +48,25 @@ export function MarbleCamera(props: MarbleCameraProps) {
   return <FreeCamera matrix={matrix()} />;
 }
 
-export function OrbitCamera(props: { target: Vec3; offset: Vec3 }) {
+export function OrbitCamera(props: {
+  target: Vec3;
+  offset: Vec3;
+  marbleRadius?: number;
+}) {
   return (
     <MarbleCamera
       marble={props.target}
       offset={props.offset}
       worldMatrix={IDENTITY}
-      marbleRadius={0}
+      marbleRadius={props.marbleRadius ?? 0}
     />
   );
 }
 
 export function FreeCamera(props: { matrix: Float32Array }) {
   return <BufferBinding label="iMat" group={0} id={0} value={props.matrix} />;
+}
+
+export function defaultOffset(lookX: number) {
+  return vec3(lookX, -0.3, 15);
 }

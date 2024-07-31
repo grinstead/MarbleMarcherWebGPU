@@ -2,7 +2,7 @@ Things remaining
 
 - [x] Level Failures (Crush, Too Far)
 - [x] Sound effects
-- [ ] Music
+- [x] Music
 - [ ] Level Transitions
 - [x] Timer
 - [x] Level End Celebration
@@ -13,5 +13,5 @@ Things remaining
   - [ ] Music on/off
   - [ ] Resolution Select
 - [ ] Full Screen (maybe)
-- [ ] Save Results
+- [x] Save Results
 - [ ] itch.io Publish

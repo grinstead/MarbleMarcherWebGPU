@@ -8,13 +8,15 @@ import {
   useGameEngine,
   useTime,
   vec2,
+  Vec3,
   vec3,
 } from "@grinstead/ambush";
 import { Fractal, FractalProps } from "./Fractal.tsx";
 import { HideMarble, Marble } from "./Marble.tsx";
-import { OrbitCamera } from "./Camera.tsx";
+import { defaultOffset, MarbleCamera, OrbitCamera } from "./Camera.tsx";
 import { FAR_AWAY, playMusic } from "./hacks.ts";
 import { levels } from "./LevelData.ts";
+import { IDENTITY } from "./Matrix.ts";
 
 export type LevelWithIntroProps = LevelProps & {
   from: FractalProps;
@@ -22,6 +24,7 @@ export type LevelWithIntroProps = LevelProps & {
 
 const ORBIT_SPEED = 0.005;
 const INTRO_START_SECONDS = 6.5;
+const DEORBIT_START = INTRO_START_SECONDS + 1;
 const INTRO_END_SECONDS = 10;
 
 export function LevelWithIntro(props: LevelWithIntroProps) {
@@ -39,7 +42,15 @@ export function LevelWithIntro(props: LevelWithIntroProps) {
   const time = useTime(() => gameloop.timer.subtimer());
 
   const smoothstep = createMemo(() => {
-    const p = Math.min(time() / INTRO_START_SECONDS);
+    const p = Math.min(time() / INTRO_START_SECONDS, 1);
+    return (p * p) / (2 * p * (p - 1) + 1);
+  });
+
+  const deorbit = createMemo(() => {
+    const ds = time() - DEORBIT_START;
+    if (ds <= 0) return 0;
+
+    const p = Math.min(ds / (INTRO_END_SECONDS - DEORBIT_START), 1);
     return (p * p) / (2 * p * (p - 1) + 1);
   });
 
@@ -61,6 +72,10 @@ export function LevelWithIntro(props: LevelWithIntroProps) {
     return vec2(angle, -0.3);
   });
 
+  const targetOffset = createMemo(() =>
+    defaultOffset(props.level.startLookDirection)
+  );
+
   return (
     <Switch fallback={<Level {...props} />}>
       <Match when={time() < INTRO_START_SECONDS}>
@@ -76,11 +91,7 @@ export function LevelWithIntro(props: LevelWithIntroProps) {
             props.level.angle2,
             smoothstep()
           )}
-          offset={vec3(
-            lerp(props.from.offset.x, props.level.offset.x, smoothstep()),
-            lerp(props.from.offset.y, props.level.offset.y, smoothstep()),
-            lerp(props.from.offset.z, props.level.offset.z, smoothstep())
-          )}
+          offset={vecLerp(props.from.offset, props.level.offset, smoothstep())}
           color={rgb(
             lerp(props.from.color.r, props.level.color.r, smoothstep()),
             lerp(props.from.color.g, props.level.color.g, smoothstep()),
@@ -96,7 +107,11 @@ export function LevelWithIntro(props: LevelWithIntroProps) {
       <Match when={time() < INTRO_END_SECONDS}>
         <Fractal {...props.level} />
         <Marble position={props.level.marblePosition} />
-        <OrbitCamera target={target()} offset={camera()} />
+        <OrbitCamera
+          marbleRadius={props.level.marbleRadius}
+          target={vecLerp(target(), props.level.marblePosition, deorbit())}
+          offset={vecLerp(camera(), targetOffset(), deorbit())}
+        />
         <h1 class="level-title">{props.level.title}</h1>
       </Match>
     </Switch>
@@ -110,4 +125,8 @@ function angleLerp(a: number, b: number, step: number) {
   }
 
   return lerp(aMod, b, step);
+}
+
+function vecLerp(a: Vec3, b: Vec3, t: number) {
+  return scale(a, 1 - t).plus(scale(b, t));
 }

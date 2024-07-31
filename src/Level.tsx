@@ -29,7 +29,7 @@ import {
   useContext,
 } from "solid-js";
 import { IDENTITY, MatrixBinary, rotateAboutY } from "./Matrix.ts";
-import { MarbleCamera } from "./Camera.tsx";
+import { defaultOffset, MarbleCamera } from "./Camera.tsx";
 import { Marble } from "./Marble.tsx";
 import { MARBLE_SOURCE, playBounceSound, sounds } from "./hacks.ts";
 import { TimeCounter } from "./UI.tsx";
@@ -97,12 +97,12 @@ function Level(props: InternalLevelProps) {
   const { mouse } = useGameEngine();
   const time = useTime(() => props.timer);
 
-  const [marble, setMarble] = createSignal(props.level.marblePosition.clone(), {
+  const [marble, setMarble] = createSignal(props.level.marblePosition, {
     equals: Vec3.equals,
   });
 
   const [cameraOffset, setCameraOffset] = createSignal(
-    vec3(props.level.startLookDirection, -0.3, 15),
+    defaultOffset(props.level.startLookDirection),
     {
       equals: Vec3.equals,
     }
