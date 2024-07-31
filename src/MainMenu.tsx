@@ -50,12 +50,6 @@ export function MainMenu(props: MainMenuProps) {
         >
           Play
         </button>
-        {/* <button onMouseEnter={playHoverSound} disabled>
-          Levels
-        </button>
-        <button onMouseEnter={playHoverSound} disabled>
-          Controls
-        </button> */}
       </div>
       <FractalBackground fractal={fractal} />
     </>

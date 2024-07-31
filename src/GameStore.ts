@@ -32,10 +32,13 @@ export type LevelResult = {
   bestTime?: number;
 };
 
+export type GameSettings = {};
+
 export type GameStore = {
   level: number;
   paused: boolean;
   loop: Docket<GameTasks, GameLoopTypes>;
+  settings: GameSettings;
 };
 
 export type PersistedData = {

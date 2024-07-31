@@ -1,5 +1,4 @@
 /* OverlayMenu.css */
-@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap");
 
 .overlay-menu {
   position: absolute;
@@ -9,11 +8,13 @@
   flex-direction: column;
   align-items: flex-start;
   color: white;
+  font-family: "Orbitron", sans-serif;
+  -webkit-text-stroke: 2px black;
 }
 
 .overlay-menu button {
   margin: 10px;
-  font-family: "Orbitron", sans-serif;
+  font-family: inherit;
   font-size: 56px;
   cursor: pointer;
   border: none;
