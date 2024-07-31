@@ -327,9 +327,11 @@ function LevelGameplay(props: LevelGameplayProps) {
       rotateAboutY(cameraMatrix, props.cameraOffset.x);
 
       let dMarble = vec3(
-        (heldKeys.has("d") ? 1 : 0) - (heldKeys.has("a") ? 1 : 0),
+        (heldKeys.has("d") || heldKeys.has("ArrowRight") ? 1 : 0) -
+          (heldKeys.has("a") || heldKeys.has("ArrowLeft") ? 1 : 0),
         0,
-        (heldKeys.has("s") ? 1 : 0) - (heldKeys.has("w") ? 1 : 0)
+        (heldKeys.has("s") || heldKeys.has("ArrowDown") ? 1 : 0) -
+          (heldKeys.has("w") || heldKeys.has("ArrowUp") ? 1 : 0)
       );
 
       // pick rotation based off of camera rotation
