@@ -1,7 +1,8 @@
 import { SetStoreFunction } from "solid-js/store";
-import { GameStore } from "./GameStore.ts";
+import { GameStore, persisted } from "./GameStore.ts";
 import "./PauseScreen.css";
 import { useGameEngine } from "@grinstead/ambush";
+import { usePersisted } from "./Persisted.ts";
 
 export type PauseScreenProps = {
   store: GameStore;
@@ -10,6 +11,8 @@ export type PauseScreenProps = {
 
 export function PauseScreen(props: PauseScreenProps) {
   const { timer } = useGameEngine().loop;
+
+  const settings = usePersisted(persisted().settings);
 
   return (
     <div class="PauseScreen">
@@ -23,7 +26,30 @@ export function PauseScreen(props: PauseScreenProps) {
         >
           Continue
         </button>
-        <button>Soundtrack On</button>
+        <button
+          onClick={() => {
+            const prev = settings().soundtrackVolume;
+
+            persisted().settings.set({
+              ...settings(),
+              soundtrackVolume: prev > 0 ? 0 : 1,
+            });
+          }}
+        >
+          Music {settings().soundtrackVolume > 0 ? "🔊" : "🔇"}
+        </button>
+        <button
+          onClick={() => {
+            const prev = settings().soundsVolume;
+
+            persisted().settings.set({
+              ...settings(),
+              soundsVolume: prev > 0 ? 0 : 1,
+            });
+          }}
+        >
+          Effects {settings().soundsVolume > 0 ? "🔊" : "🔇"}
+        </button>
         <button>Main Menu</button>
       </article>
     </div>

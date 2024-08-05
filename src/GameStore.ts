@@ -29,23 +29,26 @@ export type LevelResult = {
   bestTime?: number;
 };
 
-export type GameSettings = {};
+export type GameSettings = {
+  soundtrackVolume: number;
+  soundsVolume: number;
+};
 
 export type GameStore = {
   level: number;
   paused: boolean;
   loop: Docket<GameTasks, GameLoopTypes>;
-  settings: GameSettings;
 };
 
 export type PersistedData = {
   mostRecentlyPlayed: Persisted<string | undefined>;
   results: Persisted<Record<string, LevelResult>>;
+  settings: Persisted<GameSettings>;
 };
 
 let _persisted: undefined | PersistedData;
 
-export function persisted() {
+export function persisted(): PersistedData {
   return (_persisted ??= {
     mostRecentlyPlayed: new Persisted(
       "mostRecentlyPlayed",
@@ -60,6 +63,19 @@ export function persisted() {
         .pipe(record(string(), object({ bestTime: number().optional() }))),
       JSON.stringify
     ),
+    settings: new Persisted(
+      "settings",
+      string()
+        .optional()
+        .transform((str) => (str == null ? {} : JSON.parse(str)))
+        .pipe(
+          object({
+            soundtrackVolume: number().min(0).max(1).default(1),
+            soundsVolume: number().min(0).max(1).default(1),
+          })
+        ),
+      JSON.stringify
+    ),
   });
 }
 
@@ -71,6 +87,5 @@ export function createGameStore() {
       input: { events: ["step"] },
       render: {},
     }),
-    settings: {},
   });
 }
