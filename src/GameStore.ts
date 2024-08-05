@@ -37,6 +37,7 @@ export type GameSettings = {
 export type GameStore = {
   level: number;
   paused: boolean;
+  playing: boolean;
   loop: Docket<GameTasks, GameLoopTypes>;
 };
 
@@ -83,6 +84,7 @@ export function createGameStore() {
   return createStore<GameStore>({
     level: 0,
     paused: false,
+    playing: false,
     loop: new Docket<GameTasks, GameLoopTypes>({
       input: { events: ["step"] },
       render: {},

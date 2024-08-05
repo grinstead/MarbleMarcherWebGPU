@@ -36,7 +36,6 @@ export function Game(props: GameProps) {
   const engine = useGameEngine();
 
   const [fractal, setFractal] = createSignal<FractalProps>(genericFractal());
-  const [isPlaying, setPlaying] = createSignal(false);
 
   onMount(() => {
     const { audio } = engine;
@@ -115,7 +114,7 @@ export function Game(props: GameProps) {
       }
 
       props.setStore("level", mostRecentIndex);
-      setPlaying(true);
+      props.setStore("playing", true);
       setFractal(fractal);
     });
   }
@@ -126,11 +125,11 @@ export function Game(props: GameProps) {
       <GameUI
         store={props.store}
         setStore={props.setStore}
-        trapFocus={isPlaying()}
+        trapFocus={props.store.playing}
       >
         <Show
           keyed
-          when={isPlaying() && levels[props.store.level]}
+          when={props.store.playing && levels[props.store.level]}
           fallback={<MainMenu onPlay={handlePlay} />}
         >
           {(level) => (
@@ -166,7 +165,7 @@ export function Game(props: GameProps) {
                     props.setStore("level", next);
                     mostRecentlyPlayed.set(to);
                   } else {
-                    setPlaying(false);
+                    props.setStore("playing", true);
                     localStorage.removeItem(ACTIVE_LEVEL_KEY);
                     mostRecentlyPlayed.set(undefined);
                   }

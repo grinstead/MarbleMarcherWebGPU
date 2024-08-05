@@ -3,6 +3,7 @@ import { GameStore, persisted } from "./GameStore.ts";
 import "./PauseScreen.css";
 import { useGameEngine } from "@grinstead/ambush";
 import { usePersisted } from "./Persisted.ts";
+import { batch } from "solid-js";
 
 export type PauseScreenProps = {
   store: GameStore;
@@ -50,7 +51,16 @@ export function PauseScreen(props: PauseScreenProps) {
         >
           Effects {settings().soundsVolume > 0 ? "🔊" : "🔇"}
         </button>
-        <button>Main Menu</button>
+        <button
+          onClick={() => {
+            batch(() => {
+              props.setStore("playing", false);
+              props.setStore("paused", false);
+            });
+          }}
+        >
+          Main Menu
+        </button>
       </article>
     </div>
   );
