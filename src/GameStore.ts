@@ -66,7 +66,7 @@ export function persisted() {
 export function createGameStore() {
   return createStore<GameStore>({
     level: 0,
-    paused: true,
+    paused: false,
     loop: new Docket<GameTasks, GameLoopTypes>({
       input: { events: ["step"] },
       render: {},

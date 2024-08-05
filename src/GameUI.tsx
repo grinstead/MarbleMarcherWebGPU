@@ -6,6 +6,7 @@ import { SetStoreFunction } from "solid-js/store";
 export type GameUIProps = {
   store: GameStore;
   setStore: SetStoreFunction<GameStore>;
+  trapFocus: boolean;
   children: JSXElement;
 };
 
@@ -16,12 +17,7 @@ export function GameUI(props: GameUIProps) {
 
   return (
     <div
-      ref={(div_) => {
-        div = div_;
-        requestAnimationFrame(() => {
-          div_.focus();
-        });
-      }}
+      ref={div}
       tabIndex={1}
       onkeydown={(e) => {
         props.store.loop.add.input({ type: "pressed", key: e.key });
@@ -30,6 +26,8 @@ export function GameUI(props: GameUIProps) {
         props.store.loop.add.input({ type: "released", key: e.key });
       }}
       onblur={() => {
+        if (!props.trapFocus) return;
+
         timer.pause();
         props.store.loop.add.input({ type: "blur" });
         props.setStore("paused", true);
@@ -37,14 +35,13 @@ export function GameUI(props: GameUIProps) {
       class="overlay"
     >
       {props.children}
-      <GameLoop.Part
-        step="main"
-        work={() => {
-          if (div && div !== document.activeElement) {
-            div.focus();
-          }
-        }}
-      />
+      <GameLoop.Part step="main" work={props.trapFocus ? claimFocus : null} />
     </div>
   );
+
+  function claimFocus() {
+    if (div && div !== document.activeElement) {
+      div.focus();
+    }
+  }
 }

@@ -123,7 +123,11 @@ export function Game(props: GameProps) {
   return (
     <>
       <GameLoop.Part step="main" work={mainLoop()} />
-      <GameUI store={props.store} setStore={props.setStore}>
+      <GameUI
+        store={props.store}
+        setStore={props.setStore}
+        trapFocus={isPlaying()}
+      >
         <Show
           keyed
           when={isPlaying() && levels[props.store.level]}
