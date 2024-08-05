@@ -1,10 +1,11 @@
 import { JSXElement } from "solid-js";
 import { GameStore } from "./GameStore.ts";
-import { classnames } from "@grinstead/classnames";
-import { useGameEngine } from "@grinstead/ambush";
+import { GameLoop, useGameEngine } from "@grinstead/ambush";
+import { SetStoreFunction } from "solid-js/store";
 
 export type GameUIProps = {
   store: GameStore;
+  setStore: SetStoreFunction<GameStore>;
   children: JSXElement;
 };
 
@@ -28,20 +29,22 @@ export function GameUI(props: GameUIProps) {
       onkeyup={(e) => {
         props.store.loop.add.input({ type: "released", key: e.key });
       }}
-      onfocus={() => {
-        timer.unpause();
-        props.store.loop.add.input({ type: "focus" });
-      }}
       onblur={() => {
         timer.pause();
         props.store.loop.add.input({ type: "blur" });
-        requestAnimationFrame(() => {
-          div?.focus();
-        });
+        props.setStore("paused", true);
       }}
-      class={classnames("overlay", props.store.paused && "paused")}
+      class="overlay"
     >
       {props.children}
+      <GameLoop.Part
+        step="main"
+        work={() => {
+          if (div && div !== document.activeElement) {
+            div.focus();
+          }
+        }}
+      />
     </div>
   );
 }

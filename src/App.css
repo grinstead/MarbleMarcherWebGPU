@@ -70,7 +70,3 @@
   text-align: center;
   min-width: 1em;
 }
-
-.paused {
-  background-color: rgba(0, 0, 0, 0.125);
-}

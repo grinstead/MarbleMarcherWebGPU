@@ -17,9 +17,6 @@ export type KeyboardTask =
       key: string;
     }
   | {
-      type: "focus";
-    }
-  | {
       type: "blur";
     };
 
@@ -74,5 +71,6 @@ export function createGameStore() {
       input: { events: ["step"] },
       render: {},
     }),
+    settings: {},
   });
 }

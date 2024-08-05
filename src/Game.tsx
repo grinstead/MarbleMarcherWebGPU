@@ -17,7 +17,6 @@ import {
 import {
   GPUWorkQueueContext,
   GameLoop,
-  GameLoopContext,
   useGameEngine,
 } from "@grinstead/ambush";
 import { levels } from "./LevelData.ts";
@@ -25,6 +24,7 @@ import { genericFractal, MainMenu } from "./MainMenu.tsx";
 import { sounds } from "./hacks.ts";
 import { LevelWithIntro } from "./LevelWithIntro.tsx";
 import { FractalProps } from "./Fractal.tsx";
+import { PauseScreen } from "./PauseScreen.tsx";
 
 export type GameProps = {
   store: GameStore;
@@ -52,18 +52,14 @@ export function Game(props: GameProps) {
   let held = new Set<string>();
 
   const mainLoop = createMemo(() => {
-    const { store, setStore } = props;
+    const { store } = props;
     const { loop } = store;
 
     return renderLoopStep;
 
     function handleInput(e: KeyboardTask) {
       switch (e.type) {
-        case "focus":
-          setStore("paused", false);
-          break;
         case "blur":
-          setStore("paused", true);
           held.clear();
           break;
         case "pressed":
@@ -127,7 +123,7 @@ export function Game(props: GameProps) {
   return (
     <>
       <GameLoop.Part step="main" work={mainLoop()} />
-      <GameUI store={props.store}>
+      <GameUI store={props.store} setStore={props.setStore}>
         <Show
           keyed
           when={isPlaying() && levels[props.store.level]}
@@ -179,6 +175,9 @@ export function Game(props: GameProps) {
           )}
         </Show>
       </GameUI>
+      <Show when={props.store.paused}>
+        <PauseScreen store={props.store} setStore={props.setStore} />
+      </Show>
       <GameLoop.Part
         passive
         step="render"
