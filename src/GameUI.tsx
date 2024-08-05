@@ -20,24 +20,31 @@ export function GameUI(props: GameUIProps) {
       ref={div}
       tabIndex={1}
       onkeydown={(e) => {
+        if (e.key === "Escape") {
+          maybePause();
+          return;
+        }
+
         props.store.loop.add.input({ type: "pressed", key: e.key });
       }}
       onkeyup={(e) => {
         props.store.loop.add.input({ type: "released", key: e.key });
       }}
-      onblur={() => {
-        if (!props.trapFocus) return;
-
-        timer.pause();
-        props.store.loop.add.input({ type: "blur" });
-        props.setStore("paused", true);
-      }}
+      onblur={maybePause}
       class="overlay"
     >
       {props.children}
       <GameLoop.Part step="main" work={props.trapFocus ? claimFocus : null} />
     </div>
   );
+
+  function maybePause() {
+    if (!props.trapFocus) return;
+
+    timer.pause();
+    props.store.loop.add.input({ type: "blur" });
+    props.setStore("paused", true);
+  }
 
   function claimFocus() {
     if (div && div !== document.activeElement) {
