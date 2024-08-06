@@ -45,8 +45,6 @@ export function playBounceSound(audio: AudioManager, deltaV: number) {
   }
 }
 
-let currentSoundtrack: undefined | string;
-
 export function playMusic(audio: AudioManager, level: number) {
   let musicIndex = 0;
   MUSIC_SWITCHES.forEach((l, i) => {
@@ -54,10 +52,5 @@ export function playMusic(audio: AudioManager, level: number) {
   });
 
   const uri = SOUNDTRACKS[musicIndex % SOUNDTRACKS.length];
-
-  // todo: fix in ambush engine
-  if (uri === currentSoundtrack) return;
-
-  currentSoundtrack = uri;
-  audio.setMusic(uri);
+  audio.music(uri).play();
 }

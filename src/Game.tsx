@@ -9,6 +9,7 @@ import { GameUI } from "./GameUI.tsx";
 import {
   Show,
   batch,
+  createEffect,
   createMemo,
   createSignal,
   onMount,
@@ -25,6 +26,7 @@ import { sounds } from "./hacks.ts";
 import { LevelWithIntro } from "./LevelWithIntro.tsx";
 import { FractalProps } from "./Fractal.tsx";
 import { PauseScreen } from "./PauseScreen.tsx";
+import { usePersisted } from "./Persisted.ts";
 
 export type GameProps = {
   store: GameStore;
@@ -37,6 +39,8 @@ export function Game(props: GameProps) {
 
   const [fractal, setFractal] = createSignal<FractalProps>(genericFractal());
 
+  const settings = usePersisted(persisted().settings);
+
   onMount(() => {
     const { audio } = engine;
     for (const sound of Object.values(sounds)) {
@@ -46,6 +50,10 @@ export function Game(props: GameProps) {
         audio.preload(sound);
       }
     }
+  });
+
+  createEffect(() => {
+    engine.audio.setVolume(settings().soundsVolume);
   });
 
   let held = new Set<string>();

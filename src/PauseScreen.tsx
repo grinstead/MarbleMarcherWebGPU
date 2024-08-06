@@ -3,7 +3,7 @@ import { GameStore, persisted } from "./GameStore.ts";
 import "./PauseScreen.css";
 import { useGameEngine } from "@grinstead/ambush";
 import { usePersisted } from "./Persisted.ts";
-import { batch } from "solid-js";
+import { batch, onMount } from "solid-js";
 
 export type PauseScreenProps = {
   store: GameStore;
@@ -11,9 +11,14 @@ export type PauseScreenProps = {
 };
 
 export function PauseScreen(props: PauseScreenProps) {
-  const { timer } = useGameEngine().loop;
+  const { loop, audio } = useGameEngine();
+  const { timer } = loop;
 
   const settings = usePersisted(persisted().settings);
+
+  onMount(() => {
+    audio.music()?.pause();
+  });
 
   return (
     <div class="PauseScreen">
@@ -23,6 +28,10 @@ export function PauseScreen(props: PauseScreenProps) {
           onClick={() => {
             props.setStore("paused", false);
             timer.unpause();
+
+            if (settings().soundtrackVolume > 0) {
+              audio.music()?.play();
+            }
           }}
         >
           Continue
