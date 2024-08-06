@@ -21,23 +21,20 @@ export function PauseScreen(props: PauseScreenProps) {
   });
 
   return (
-    <div class="PauseScreen">
-      <article class="PauseMenu">
+    <div class="PauseScreen" onClick={unpause}>
+      <article
+        class="PauseMenu"
+        onClick={(e) => {
+          // the parent div automatically closes the pause screen when it is
+          // clicked on, but we don't want that to happen if the user actually
+          // clicked on anything in the pause menu box (which is this <article>)
+          e.stopPropagation();
+        }}
+      >
         <h1>Game Paused</h1>
+        <button onClick={unpause}>Continue</button>
         <button
-          onClick={() => {
-            props.setStore("paused", false);
-            timer.unpause();
-
-            if (settings().soundtrackVolume > 0) {
-              audio.music()?.play();
-            }
-          }}
-        >
-          Continue
-        </button>
-        <button
-          onClick={() => {
+          onClick={(e) => {
             const prev = settings().soundtrackVolume;
 
             persisted().settings.set({
@@ -73,4 +70,13 @@ export function PauseScreen(props: PauseScreenProps) {
       </article>
     </div>
   );
+
+  function unpause() {
+    props.setStore("paused", false);
+    timer.unpause();
+
+    if (settings().soundtrackVolume > 0) {
+      audio.music()?.play();
+    }
+  }
 }
