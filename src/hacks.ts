@@ -14,6 +14,7 @@ import level1_ogg from "./assets/level1.ogg";
 import level2_ogg from "./assets/level2.ogg";
 import level3_ogg from "./assets/level3.ogg";
 import level4_ogg from "./assets/level4.ogg";
+import { persisted } from "./GameStore.ts";
 
 const SOUNDTRACKS = [level1_ogg, level2_ogg, level3_ogg, level4_ogg];
 
@@ -52,5 +53,11 @@ export function playMusic(audio: AudioManager, level: number) {
   });
 
   const uri = SOUNDTRACKS[musicIndex % SOUNDTRACKS.length];
+
   audio.music(uri).play();
+
+  // TODO: I should have this built into the audio manager
+  if (persisted().settings.get().soundtrackVolume === 0) {
+    audio.music()?.pause();
+  }
 }
