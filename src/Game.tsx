@@ -173,8 +173,7 @@ export function Game(props: GameProps) {
                     props.setStore("level", next);
                     mostRecentlyPlayed.set(to);
                   } else {
-                    props.setStore("playing", true);
-                    localStorage.removeItem(ACTIVE_LEVEL_KEY);
+                    props.setStore("playing", false);
                     mostRecentlyPlayed.set(undefined);
                   }
 
