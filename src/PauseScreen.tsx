@@ -34,7 +34,7 @@ export function PauseScreen(props: PauseScreenProps) {
         <h1>Game Paused</h1>
         <button onClick={unpause}>Continue</button>
         <button
-          onClick={(e) => {
+          onClick={() => {
             const prev = settings().soundtrackVolume;
 
             persisted().settings.set({

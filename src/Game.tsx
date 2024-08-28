@@ -1,10 +1,5 @@
 import { SetStoreFunction } from "solid-js/store";
-import {
-  GameStore,
-  KeyboardTask,
-  ACTIVE_LEVEL_KEY,
-  persisted,
-} from "./GameStore.ts";
+import { GameStore, KeyboardTask, persisted } from "./GameStore.ts";
 import { GameUI } from "./GameUI.tsx";
 import {
   Show,
@@ -157,10 +152,10 @@ export function Game(props: GameProps) {
 
                   const from = levels[level].title;
                   const { bestTime } = results.get()[from] ?? {};
-                  if (bestTime == null || bestTime > state.time) {
+                  if (bestTime == null || bestTime > state.result.bestTime) {
                     resultsVal = {
                       ...resultsVal,
-                      [from]: { bestTime: state.time },
+                      [from]: { bestTime: state.result.bestTime },
                     };
                   }
 

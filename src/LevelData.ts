@@ -22,6 +22,8 @@ export type LevelData = FractalShape & {
 
 export const MUSIC_SWITCHES = [9, 15, 21, 24];
 
+export const MIDPOINT = 15;
+
 export const levels: Array<LevelData> = [
   {
     scale: 1.8,

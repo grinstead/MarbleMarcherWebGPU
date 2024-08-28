@@ -35,7 +35,7 @@ import { MARBLE_SOURCE, playBounceSound, sounds } from "./hacks.ts";
 import { TimeCounter } from "./UI.tsx";
 import { Countdown } from "./Countdown.tsx";
 import { usePersisted } from "./Persisted.ts";
-import { persisted } from "./GameStore.ts";
+import { persisted, PlaythroughLevelResult } from "./GameStore.ts";
 
 const MARBLE_BOUNCE = 1.2; //Range 1.0 to 2.0
 
@@ -60,7 +60,7 @@ export type LevelProps = {
 
 export type LevelEndState = {
   title: string;
-  time: number;
+  result: PlaythroughLevelResult;
   endVelocity: Vec3;
   endPosition: Vec3;
   fractal: FractalProps;
@@ -69,6 +69,9 @@ export type LevelEndState = {
 function LevelWrapper(props: LevelProps) {
   const gameloop = useContext(GameLoopContext)!;
 
+  let totalDroppedTime = 0;
+  let restarts = 0;
+
   const [timer, setTimer] = createSignal(gameloop.timer.subtimer());
 
   return (
@@ -76,8 +79,21 @@ function LevelWrapper(props: LevelProps) {
       {(timer) => (
         <Level
           {...props}
+          onVictory={(state) => {
+            props.onVictory({
+              ...state,
+              result: {
+                totalTime: state.result.totalTime + totalDroppedTime,
+                restarts,
+                bestTime: state.result.bestTime,
+              },
+            });
+          }}
           timer={timer}
           onReset={() => {
+            totalDroppedTime += timer.time;
+            restarts++;
+
             setTimer(gameloop.timer.subtimer());
           }}
         />
@@ -280,7 +296,12 @@ function LevelGameplay(props: LevelGameplayProps) {
         engine.audio.play(null, sounds.goal);
         props.onVictory({
           title: props.level.title,
-          time: timer.time,
+          result: {
+            bestTime: timer.time,
+            // these numbers get changed by the container
+            totalTime: timer.time,
+            restarts: 0,
+          },
           endVelocity: v,
           endPosition: p,
           fractal: fractal(),
@@ -426,7 +447,7 @@ function LevelCelebration(props: {
 
   const isRecord = createMemo(() => {
     const best = levelResults()[props.state.title]?.bestTime;
-    return best == null || props.state.time <= best;
+    return best == null || props.state.result.bestTime <= best;
   });
 
   let originalMarble: undefined | Vec3;
@@ -435,7 +456,10 @@ function LevelCelebration(props: {
     <>
       <Fractal {...props.state.fractal} />
       <GameLoop.Part step="main" work={runStep} />
-      <TimeCounter seconds={props.state.time} isRecord={isRecord()} />
+      <TimeCounter
+        seconds={props.state.result.bestTime}
+        isRecord={isRecord()}
+      />
     </>
   );
 

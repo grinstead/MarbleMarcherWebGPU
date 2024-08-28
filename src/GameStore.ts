@@ -38,6 +38,7 @@ export type GameStore = {
   level: number;
   paused: boolean;
   playing: boolean;
+  playthrough?: PlayThrough;
   loop: Docket<GameTasks, GameLoopTypes>;
 };
 
@@ -45,6 +46,16 @@ export type PersistedData = {
   mostRecentlyPlayed: Persisted<string | undefined>;
   results: Persisted<Record<string, LevelResult>>;
   settings: Persisted<GameSettings>;
+};
+
+export type PlaythroughLevelResult = Required<LevelResult> & {
+  totalTime: number;
+  restarts: number;
+};
+
+export type PlayThrough = {
+  current: string;
+  results: Record<string, LevelResult>;
 };
 
 let _persisted: undefined | PersistedData;

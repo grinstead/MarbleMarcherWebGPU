@@ -10,7 +10,7 @@ Things remaining
 - [x] Pause on Blur
 - [x] Opening Menu
 - [ ] Settings
-  - [ ] Music on/off
+  - [x] Music on/off
   - [ ] Resolution Select
 - [ ] Full Screen (maybe)
 - [x] Save Results

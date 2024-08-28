@@ -13,10 +13,9 @@ import {
 } from "@grinstead/ambush";
 import { Fractal, FractalProps } from "./Fractal.tsx";
 import { HideMarble, Marble } from "./Marble.tsx";
-import { defaultOffset, MarbleCamera, OrbitCamera } from "./Camera.tsx";
+import { defaultOffset, OrbitCamera } from "./Camera.tsx";
 import { FAR_AWAY, playMusic } from "./hacks.ts";
 import { levels } from "./LevelData.ts";
-import { IDENTITY } from "./Matrix.ts";
 
 export type LevelWithIntroProps = LevelProps & {
   from: FractalProps;
