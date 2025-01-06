@@ -19,9 +19,11 @@ import {
   vec3,
 } from "@grinstead/ambush";
 import { sounds } from "./hacks.ts";
+import { persisted } from "./GameStore.ts";
+import { levels } from "./LevelData.ts";
 
 export type MainMenuProps = {
-  onPlay: (fromFractal: FractalProps) => void;
+  onPlay: (chosenLevel: number, fromFractal: FractalProps) => void;
 };
 
 const ButtonSource = Symbol("Button");
@@ -40,15 +42,29 @@ export function MainMenu(props: MainMenuProps) {
     audio.play(ButtonSource, sounds.menuHover);
   };
 
+  const playClickSound = () => {
+    audio.enable();
+    audio.play(ButtonSource, sounds.menuClick);
+  };
+
   return (
     <>
       <div class="overlay-menu">
         <div class="title">Marble Marcher</div>
         <button
           onClick={() => {
-            audio.enable();
-            audio.play(ButtonSource, sounds.menuClick);
-            props.onPlay(fractal[0]());
+            playClickSound();
+
+            const mostRecent = persisted().mostRecentlyPlayed.get();
+            const mostRecentIndex =
+              mostRecent != null
+                ? levels.findIndex((l) => l.title === mostRecent)
+                : -1;
+
+            props.onPlay(
+              mostRecentIndex < 0 ? 0 : mostRecentIndex,
+              fractal[0]()
+            );
           }}
           onMouseEnter={playHoverSound}
         >

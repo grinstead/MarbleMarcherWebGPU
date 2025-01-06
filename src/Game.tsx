@@ -99,24 +99,16 @@ export function Game(props: GameProps) {
     }
   });
 
-  function handlePlay(fractal: FractalProps) {
-    let mostRecent = persisted().mostRecentlyPlayed.get();
-    let mostRecentIndex =
-      mostRecent != null ? levels.findIndex((l) => l.title === mostRecent) : -1;
-
-    if (mostRecentIndex < 0) {
-      mostRecent = levels[0].title;
-      mostRecentIndex = 0;
-    }
-
+  function handlePlay(chosenLevel: number, fractal: FractalProps) {
     batch(() => {
-      persisted().mostRecentlyPlayed.set(mostRecent);
+      const title = levels[chosenLevel].title;
+      persisted().mostRecentlyPlayed.set(title);
       const prev = persisted().results.get();
-      if (!prev[mostRecent!]) {
-        persisted().results.set({ ...prev, [mostRecent!]: {} });
+      if (!prev[title]) {
+        persisted().results.set({ ...prev, [title]: {} });
       }
 
-      props.setStore("level", mostRecentIndex);
+      props.setStore("level", chosenLevel);
       props.setStore("playing", true);
       setFractal(fractal);
     });
