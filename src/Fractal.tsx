@@ -2,10 +2,12 @@ import {
   ScalarBinding,
   Vec3,
   VectorBinding,
+  rgb,
   rgbArray,
   vec3,
 } from "@grinstead/ambush";
 import { FractalShape, LevelData } from "./LevelData.ts";
+import { FAR_AWAY } from "./hacks.ts";
 
 export type FractalProps = FractalShape &
   Pick<LevelData, "color" | "marbleRadius" | "isPlanet" | "flagPosition">;
@@ -170,4 +172,25 @@ export function nearestPoint(fractal: FractalShape, original: Vec3) {
 
 function clamp(x: number, min: number, max: number) {
   return x < min ? min : x > max ? max : x;
+}
+
+const GENERIC_FRACTAL = {
+  color: rgb(-0.2, -0.1, -0.6),
+  marbleRadius: 1,
+  isPlanet: false,
+  flagPosition: FAR_AWAY,
+};
+
+export function genericFractal(frame: number = 0): FractalProps {
+  return {
+    ...GENERIC_FRACTAL,
+    scale: 1.6,
+    angle1: 2 + 0.5 * Math.cos(frame * 0.0021),
+    angle2: Math.PI + 0.5 * Math.cos(frame * 0.000287),
+    offset: vec3(
+      -4 + 0.5 * Math.sin(frame * 0.00161),
+      -1 + 0.2 * Math.sin(frame * 0.00123),
+      -1 + 0.1 * Math.cos(frame * 0.00137)
+    ),
+  };
 }

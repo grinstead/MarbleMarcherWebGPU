@@ -16,10 +16,10 @@ import {
   useGameEngine,
 } from "@grinstead/ambush";
 import { levels } from "./LevelData.ts";
-import { genericFractal, MainMenu } from "./MainMenu.tsx";
+import { MainMenu } from "./MainMenu.tsx";
 import { sounds } from "./hacks.ts";
 import { LevelWithIntro } from "./LevelWithIntro.tsx";
-import { FractalProps } from "./Fractal.tsx";
+import { FractalProps, genericFractal } from "./Fractal.tsx";
 import { PauseScreen } from "./PauseScreen.tsx";
 import { usePersisted } from "./Persisted.ts";
 

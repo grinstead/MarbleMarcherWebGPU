@@ -8,18 +8,17 @@ import {
   useContext,
 } from "solid-js";
 import { OrbitCamera } from "./Camera.tsx";
-import { Fractal, FractalProps } from "./Fractal.tsx";
+import { Fractal, FractalProps, genericFractal } from "./Fractal.tsx";
 import { HideMarble } from "./Marble.tsx";
 import {
   GameLoopContext,
   Props,
-  rgb,
   scale,
   useGameEngine,
   useTime,
   vec3,
 } from "@grinstead/ambush";
-import { FAR_AWAY, sounds } from "./hacks.ts";
+import { sounds } from "./hacks.ts";
 
 export type MainMenuProps = {
   onPlay: (fromFractal: FractalProps) => void;
@@ -94,25 +93,4 @@ function FractalBackground(props: { fractal: Signal<FractalProps> }) {
       <OrbitCamera {...camera()} />
     </>
   );
-}
-
-const GENERIC_FRACTAL = {
-  color: rgb(-0.2, -0.1, -0.6),
-  marbleRadius: 1,
-  isPlanet: false,
-  flagPosition: FAR_AWAY,
-};
-
-export function genericFractal(frame: number = 0): FractalProps {
-  return {
-    ...GENERIC_FRACTAL,
-    scale: 1.6,
-    angle1: 2 + 0.5 * Math.cos(frame * 0.0021),
-    angle2: Math.PI + 0.5 * Math.cos(frame * 0.000287),
-    offset: vec3(
-      -4 + 0.5 * Math.sin(frame * 0.00161),
-      -1 + 0.2 * Math.sin(frame * 0.00123),
-      -1 + 0.1 * Math.cos(frame * 0.00137)
-    ),
-  };
 }

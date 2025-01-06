@@ -2,6 +2,7 @@ import { createStore } from "solid-js/store";
 import { Docket } from "@grinstead/ambush";
 import { Persisted } from "./Persisted.ts";
 import { number, object, record, string } from "zod";
+import { FractalProps, genericFractal } from "./Fractal.tsx";
 
 export type GameLoopTypes = "step";
 
@@ -39,6 +40,7 @@ export type GameStore = {
   paused: boolean;
   playing: boolean;
   playthrough?: PlayThrough;
+  fractal: FractalProps;
   loop: Docket<GameTasks, GameLoopTypes>;
 };
 
@@ -96,6 +98,7 @@ export function createGameStore() {
     level: 0,
     paused: false,
     playing: false,
+    fractal: genericFractal(),
     loop: new Docket<GameTasks, GameLoopTypes>({
       input: { events: ["step"] },
       render: {},
