@@ -1,10 +1,30 @@
 import { classnames } from "@grinstead/classnames";
 import { createMemo, For, Show } from "solid-js";
 
-export function TimeCounter(props: { seconds: number; isRecord?: boolean }) {
+export function TimeCounter(props: {
+  seconds: number;
+  overhead?: boolean;
+  isRecord?: boolean;
+}) {
   const minutes = createMemo(() => Math.floor(props.seconds / 60));
   return (
-    <h2 class={classnames("timer", props.isRecord && "victory")}>
+    <h2
+      class={classnames(
+        "timer",
+        props.overhead && "overhead",
+        props.isRecord && "victory"
+      )}
+    >
+      <TimerText seconds={props.seconds} />
+    </h2>
+  );
+}
+
+export function TimerText(props: { seconds: number }) {
+  const minutes = createMemo(() => Math.floor(props.seconds / 60));
+
+  return (
+    <>
       <Show
         when={minutes() >= 100}
         fallback={<DoubleDigit value={minutes()} />}
@@ -16,7 +36,7 @@ export function TimeCounter(props: { seconds: number; isRecord?: boolean }) {
       :
       <DoubleDigit value={Math.floor(props.seconds) % 60} />.
       <DoubleDigit value={Math.floor(props.seconds * 100) % 100} />
-    </h2>
+    </>
   );
 }
 

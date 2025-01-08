@@ -388,7 +388,7 @@ function LevelGameplay(props: LevelGameplayProps) {
       <Fractal {...fractal()} />
       <GameLoop.Part step="main" work={runStep()} />
       <Show when={time() > 1} fallback={<Countdown launchSound>Go!</Countdown>}>
-        <TimeCounter seconds={time()} />
+        <TimeCounter overhead seconds={time()} />
       </Show>
     </>
   );
@@ -457,6 +457,7 @@ function LevelCelebration(props: {
       <Fractal {...props.state.fractal} />
       <GameLoop.Part step="main" work={runStep} />
       <TimeCounter
+        overhead
         seconds={props.state.result.bestTime}
         isRecord={isRecord()}
       />

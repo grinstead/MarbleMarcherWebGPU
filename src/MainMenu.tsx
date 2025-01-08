@@ -3,8 +3,12 @@ import {
   createMemo,
   createRenderEffect,
   createSignal,
+  For,
+  Match,
   onMount,
+  Show,
   Signal,
+  Switch,
   useContext,
 } from "solid-js";
 import { OrbitCamera } from "./Camera.tsx";
@@ -21,6 +25,8 @@ import {
 import { sounds } from "./hacks.ts";
 import { persisted } from "./GameStore.ts";
 import { levels } from "./LevelData.ts";
+import { TimeCounter, TimerText } from "./UI.tsx";
+import { usePersisted } from "./Persisted.ts";
 
 export type MainMenuProps = {
   onPlay: (chosenLevel: number, fromFractal: FractalProps) => void;
@@ -28,8 +34,28 @@ export type MainMenuProps = {
 
 const ButtonSource = Symbol("Button");
 
+type MainMenuScreen = "main" | "levelSelect";
+
+function useButtonSounds() {
+  const { audio } = useGameEngine();
+
+  return {
+    hover() {
+      audio.enable();
+      audio.play(ButtonSource, sounds.menuHover);
+    },
+
+    click() {
+      audio.enable();
+      audio.play(ButtonSource, sounds.menuClick);
+    },
+  };
+}
+
 export function MainMenu(props: MainMenuProps) {
-  const { audio, loop } = useGameEngine();
+  const { loop } = useGameEngine();
+
+  const [screen, setScreen] = createSignal<MainMenuScreen>("main");
 
   onMount(() => {
     loop.timer.unpause();
@@ -37,39 +63,92 @@ export function MainMenu(props: MainMenuProps) {
 
   const fractal = createSignal<FractalProps>(genericFractal());
 
-  const playHoverSound = () => {
-    audio.enable();
-    audio.play(ButtonSource, sounds.menuHover);
-  };
+  const buttonSounds = useButtonSounds();
 
-  const playClickSound = () => {
-    audio.enable();
-    audio.play(ButtonSource, sounds.menuClick);
-  };
+  const results = usePersisted(persisted().results);
 
   return (
     <>
       <div class="overlay-menu">
-        <div class="title">Marble Marcher</div>
-        <button
-          onClick={() => {
-            playClickSound();
+        <Switch>
+          <Match when={screen() === "main"}>
+            <div class="title">Marble Marcher</div>
+            <button
+              onClick={() => {
+                buttonSounds.click();
 
-            const mostRecent = persisted().mostRecentlyPlayed.get();
-            const mostRecentIndex =
-              mostRecent != null
-                ? levels.findIndex((l) => l.title === mostRecent)
-                : -1;
+                const mostRecent = persisted().mostRecentlyPlayed.get();
+                const mostRecentIndex =
+                  mostRecent != null
+                    ? levels.findIndex((l) => l.title === mostRecent)
+                    : -1;
 
-            props.onPlay(
-              mostRecentIndex < 0 ? 0 : mostRecentIndex,
-              fractal[0]()
-            );
-          }}
-          onMouseEnter={playHoverSound}
-        >
-          Play
-        </button>
+                props.onPlay(
+                  mostRecentIndex < 0 ? 0 : mostRecentIndex,
+                  fractal[0]()
+                );
+              }}
+              onMouseEnter={buttonSounds.hover}
+            >
+              Play
+            </button>
+            <button
+              onClick={() => {
+                buttonSounds.click();
+                setScreen("levelSelect");
+              }}
+              onMouseEnter={buttonSounds.hover}
+            >
+              Level Select
+            </button>
+          </Match>
+          <Match when={screen() === "levelSelect"}>
+            <div class="level-select">
+              <div>
+                <button
+                  onClick={() => {
+                    buttonSounds.click();
+                    setScreen("main");
+                  }}
+                  onMouseEnter={buttonSounds.hover}
+                >
+                  &lt; Back
+                </button>
+              </div>
+              <For each={levels}>
+                {(level, i) => {
+                  const bestTime = createMemo(
+                    () => results()[level.title].bestTime
+                  );
+
+                  return (
+                    <div>
+                      <Show
+                        when={results()[level.title] != null}
+                        fallback={<div class="level-unknown">???</div>}
+                      >
+                        <button
+                          onClick={() => {
+                            buttonSounds.click();
+                            props.onPlay(i(), fractal[0]());
+                          }}
+                          onMouseEnter={buttonSounds.hover}
+                        >
+                          {level.title}
+                        </button>
+                        <Show when={bestTime() != null}>
+                          <div class="timer victory">
+                            <TimerText seconds={bestTime()!} />
+                          </div>
+                        </Show>
+                      </Show>
+                    </div>
+                  );
+                }}
+              </For>
+            </div>
+          </Match>
+        </Switch>
       </div>
       <FractalBackground fractal={fractal} />
     </>
