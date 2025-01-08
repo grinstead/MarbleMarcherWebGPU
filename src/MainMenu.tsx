@@ -25,7 +25,7 @@ import {
 import { sounds } from "./hacks.ts";
 import { persisted } from "./GameStore.ts";
 import { levels } from "./LevelData.ts";
-import { TimeCounter, TimerText } from "./UI.tsx";
+import { TimerText } from "./UI.tsx";
 import { usePersisted } from "./Persisted.ts";
 
 export type MainMenuProps = {

@@ -6,7 +6,6 @@ export function TimeCounter(props: {
   overhead?: boolean;
   isRecord?: boolean;
 }) {
-  const minutes = createMemo(() => Math.floor(props.seconds / 60));
   return (
     <h2
       class={classnames(
