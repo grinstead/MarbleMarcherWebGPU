@@ -117,14 +117,12 @@ export function MainMenu(props: MainMenuProps) {
               </div>
               <For each={levels}>
                 {(level, i) => {
-                  const bestTime = createMemo(
-                    () => results()[level.title].bestTime
-                  );
+                  const data = createMemo(() => results()[level.title]);
 
                   return (
                     <div>
                       <Show
-                        when={results()[level.title] != null}
+                        when={data() != null}
                         fallback={<div class="level-unknown">???</div>}
                       >
                         <button
@@ -136,9 +134,9 @@ export function MainMenu(props: MainMenuProps) {
                         >
                           {level.title}
                         </button>
-                        <Show when={bestTime() != null}>
+                        <Show when={data()?.bestTime != null}>
                           <div class="timer victory">
-                            <TimerText seconds={bestTime()!} />
+                            <TimerText seconds={data().bestTime!} />
                           </div>
                         </Show>
                       </Show>
