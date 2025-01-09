@@ -7,7 +7,7 @@ import { createGameStore } from "./GameStore.ts";
 export function Embedded() {
   const [store, setStore] = createGameStore();
 
-  return (
+  const game = (
     <AmbushGame
       class="game"
       fallback={(e) => {
@@ -24,7 +24,12 @@ export function Embedded() {
       }}
     >
       <Graphics />
+      {(console.log("child"), null)}
       <Game store={store} setStore={setStore} />
     </AmbushGame>
   );
+
+  console.log("built");
+
+  return game;
 }

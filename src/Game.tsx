@@ -29,6 +29,8 @@ export type GameProps = {
 };
 
 export function Game(props: GameProps) {
+  console.log("Game Run");
+
   const graphics = useContext(GPUWorkQueueContext)!;
   const engine = useGameEngine();
 
